@@ -90,6 +90,12 @@ public sealed class WpfDialogService : IDialogService
         return dialog.ShowDialog(Owner()) == true ? dialog.FileName : null;
     }
 
+    public string? PickFolder(string title)
+    {
+        var dialog = new OpenFolderDialog { Title = title, Multiselect = false };
+        return dialog.ShowDialog(Owner()) == true ? dialog.FolderName : null;
+    }
+
     private static Window Owner() => Application.Current.MainWindow;
 }
 

@@ -36,31 +36,54 @@ public sealed class FeatureCatalog : IFeatureCatalog
             _messages.AddRange(source.Errors);
             _messages.AddRange(source.Warnings);
             foreach (var entry in source.Entries)
-            {
-                var merged = _byId.TryGetValue(entry.Id, out var existing) && entry.Name == null
-                    ? entry with { Name = existing.Name }
-                    : entry;
-                _byId[entry.Id] = merged;
-            }
+                _byId[entry.Id] = _byId.TryGetValue(entry.Id, out var existing) ? Merge(existing, entry) : entry;
         }
         foreach (var entry in _byId.Values)
+        {
             if (entry.Name != null)
                 _byName.TryAdd(entry.Name, entry);
-        _ordered = _byId.Values.OrderBy(e => e.Name ?? "￿", StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Id).ToList();
+        }
+        foreach (var entry in _byId.Values)
+            foreach (var alias in entry.Aliases)
+                _byName.TryAdd(alias, entry);
+        _ordered = _byId.Values.OrderBy(e => e.Name ?? "\uffff", StringComparer.OrdinalIgnoreCase).ThenBy(e => e.Id).ToList();
         Categories = _byId.Values.Select(e => e.Category).Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c!)
             .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(c => c, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
+    /// <summary>
+    /// The more trusted entry wins. It keeps the earlier name when it has none, and any name the earlier
+    /// source used that differs is kept as a searchable alias (so a rename never hides a known name).
+    /// </summary>
+    internal static FeatureCatalogEntry Merge(FeatureCatalogEntry existing, FeatureCatalogEntry incoming)
+    {
+        var name = incoming.Name ?? existing.Name;
+        var aliases = incoming.Aliases.Concat(existing.Aliases)
+            .Append(existing.Name).Append(incoming.Name)
+            .Where(a => a != null && !string.Equals(a, name, StringComparison.OrdinalIgnoreCase))
+            .Select(a => a!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        return incoming with { Name = name, Aliases = aliases };
+    }
+
     public static FeatureCatalog Empty { get; } = new(Array.Empty<CatalogLoadResult>());
 
-    /// <summary>Loads the bundled name dictionary and curated catalog from a directory (missing files are reported, not fatal).</summary>
-    public static FeatureCatalog LoadFromDirectory(string directory, string? userCatalogPath = null)
+    /// <summary>
+    /// Loads catalogs from a directory, in increasing trust: the bundled name dictionary, then imported
+    /// catalogs (for example the mach2 import), then the curated catalog, then the user's own catalog.
+    /// Missing files are reported, not fatal; missing imported catalogs are silently skipped.
+    /// </summary>
+    public static FeatureCatalog LoadFromDirectory(string directory, string? userCatalogPath = null, IEnumerable<string>? importedCatalogPaths = null)
     {
         var sources = new List<CatalogLoadResult>
         {
             FeatureCatalogLoader.LoadLegacyDictionaryFile(Path.Combine(directory, "FeatureDictionary.pfs")),
-            FeatureCatalogLoader.LoadJsonFile(Path.Combine(directory, "feature-catalog.json")),
         };
+        foreach (var imported in importedCatalogPaths ?? Array.Empty<string>())
+            if (File.Exists(imported))
+                sources.Add(FeatureCatalogLoader.LoadJsonFile(imported));
+        sources.Add(FeatureCatalogLoader.LoadJsonFile(Path.Combine(directory, "feature-catalog.json")));
         if (!string.IsNullOrWhiteSpace(userCatalogPath))
             sources.Add(FeatureCatalogLoader.LoadJsonFile(userCatalogPath));
         return new FeatureCatalog(sources);
@@ -96,6 +119,7 @@ public sealed class FeatureCatalog : IFeatureCatalog
             var match = isNumeric
                 ? entry.Id.ToString(System.Globalization.CultureInfo.InvariantCulture).StartsWith(query, StringComparison.Ordinal)
                 : (entry.Name?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                  entry.Aliases.Any(a => a.Contains(query, StringComparison.OrdinalIgnoreCase)) ||
                   (entry.Description?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false);
             if (match) results.Add(entry);
         }

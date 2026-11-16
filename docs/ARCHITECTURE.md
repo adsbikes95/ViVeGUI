@@ -71,6 +71,7 @@ src/ViVe.Studio/           WPF application (net10.0-windows)
 tests/ViVe.Core.Tests/     engine, builders, CLI argument regression, Windows-only read-only native tests
 tests/ViVe.Studio.Tests/   catalog, history, rollback, settings, view models
 catalog/feature-catalog.json  curated catalog (empty until entries are verified)
+catalog/mach2-manifest.txt    pinned mach2 dump paths + SHA-256 (embedded; used to verify imports)
 build/                     packaging and CLI smoke-test scripts
 .github/workflows/build.yml   Windows + Linux CI, packaging, releases
 ```

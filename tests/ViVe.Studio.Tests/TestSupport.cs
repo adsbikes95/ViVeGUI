@@ -30,6 +30,8 @@ public sealed class FakeDialogs : IDialogService
     public void ShowMessage(string title, string message, bool isError) { }
     public string? PickSaveFile(string title, string filter, string defaultFileName) => SavePath;
     public string? PickOpenFile(string title, string filter) => OpenPath;
+    public string? FolderPath { get; set; }
+    public string? PickFolder(string title) => FolderPath;
 }
 
 public sealed class FakeElevation : IElevationService

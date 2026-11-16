@@ -9,6 +9,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Pinned list of mach2 feature dumps with SHA-256 hashes; imports are checked against it. -->
+    <EmbeddedResource Include="..\..\catalog\mach2-manifest.txt" LogicalName="ViVe.FeatureCatalog.mach2-manifest.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="ViVe.Studio.Tests" />
   </ItemGroup>
 </Project>

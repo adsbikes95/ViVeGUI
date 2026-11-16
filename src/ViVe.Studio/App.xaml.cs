@@ -43,7 +43,12 @@ public partial class App : Application
         services.AddSingleton<ISettingsService>(_ => new JsonSettingsService(paths.SettingsFile));
         services.AddSingleton<IAppLogger>(sp => new FileLogger(paths, () => sp.GetRequiredService<ISettingsService>().Current.EnableFileLogging));
         services.AddSingleton<IChangeHistoryStore>(_ => new JsonChangeHistoryStore(paths.HistoryFile));
-        services.AddSingleton<IFeatureCatalog>(sp => FeatureCatalog.FeatureCatalog.LoadFromDirectory(paths.CatalogDirectory, sp.GetRequiredService<ISettingsService>().Current.UserCatalogPath));
+        services.AddSingleton<IFeatureCatalog>(sp => new ReloadableFeatureCatalog(() => FeatureCatalog.FeatureCatalog.LoadFromDirectory(
+            paths.CatalogDirectory,
+            sp.GetRequiredService<ISettingsService>().Current.UserCatalogPath,
+            new[] { System.IO.Path.Combine(paths.ImportedCatalogDirectory, Mach2ImportService.ImportFileName) })));
+        services.AddSingleton<IFileDownloader, HttpFileDownloader>();
+        services.AddSingleton(sp => new Mach2ImportService(paths, sp.GetRequiredService<IFileDownloader>()));
 
         // Engine: the real ViVe library. All GUI modifications go through FeatureEngine.
         services.AddSingleton<IFeatureConfigurationApi, NativeFeatureConfigurationApi>();

@@ -16,6 +16,9 @@ public static partial class FeatureCatalogLoader
     [GeneratedRegex("^[A-Za-z0-9_.\\-]{1,256}$")]
     private static partial Regex NamePattern();
 
+    /// <summary>True when <paramref name="name"/> is an acceptable internal feature name (letters, digits, '_', '.', '-').</summary>
+    public static bool IsValidName(string? name) => name != null && NamePattern().IsMatch(name);
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -68,6 +71,7 @@ public static partial class FeatureCatalogLoader
             if (entry.Id == 0) { errors.Add("Entry with feature ID 0 skipped."); continue; }
             if (!seen.Add(entry.Id)) { errors.Add($"Duplicate entry for feature {entry.Id} skipped."); continue; }
             if (entry.Name != null && !NamePattern().IsMatch(entry.Name)) { errors.Add($"Feature {entry.Id} has an invalid name; entry skipped."); continue; }
+            if ((entry.Aliases ?? Array.Empty<string>()).Any(a => a == null || !NamePattern().IsMatch(a))) { errors.Add($"Feature {entry.Id} has an invalid alias; entry skipped."); continue; }
             if (entry.VerificationStatus is VerificationStatus.CommunityReported or VerificationStatus.Verified && string.IsNullOrWhiteSpace(entry.Source))
             {
                 errors.Add($"Feature {entry.Id} is marked {entry.VerificationStatus} but has no source; entry skipped.");
@@ -79,7 +83,7 @@ public static partial class FeatureCatalogLoader
                 if (b.MinBuild is not null && b.MaxBuild is not null && b.MinBuild > b.MaxBuild)
                     warnings.Add($"Feature {entry.Id} has a build range with minBuild > maxBuild.");
             if (entries.Count >= MaxEntries) { errors.Add($"Catalog exceeds {MaxEntries} entries; remaining entries ignored."); break; }
-            entries.Add(entry);
+            entries.Add(entry.Aliases == null ? entry with { Aliases = Array.Empty<string>() } : entry);
         }
         return new CatalogLoadResult(entries, errors, warnings);
     }

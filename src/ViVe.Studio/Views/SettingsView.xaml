@@ -60,6 +60,27 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
+                    <TextBlock Text="Feature names from mach2" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{Binding Mach2AboutText, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Mach2StatusText}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <WrapPanel Margin="0,8,0,0">
+                        <Button Content="_Download and import..." Command="{Binding ImportMach2Command}" Margin="0,0,8,0" MinWidth="96" />
+                        <Button Content="Import from a _local mach2 clone..." Command="{Binding ImportMach2FolderCommand}" Margin="0,0,8,0" MinWidth="96" />
+                        <Button Content="Remove i_mport" Command="{Binding RemoveMach2Command}" Margin="0,0,8,0" MinWidth="96" />
+                    </WrapPanel>
+                    <TextBlock Text="{Binding Mach2ProgressText}" Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,6,0,0" />
+                    <TextBlock Text="Cross-check with this PC" Style="{StaticResource SectionTitle}" Margin="0,16,0,0" />
+                    <TextBlock Style="{StaticResource Caption}" TextWrapping="Wrap"
+                               Text="Compares the feature IDs configured in this PC's runtime feature store (what ViVeTool /query lists) with the catalog. Read-only." />
+                    <Button Content="_Cross-check" Command="{Binding CrossCheckCommand}" HorizontalAlignment="Left" Margin="0,8,0,0" MinWidth="96" />
+                    <TextBlock Text="{Binding CrossCheckText}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <TextBox Text="{Binding CrossCheckUnnamedText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent"
+                             AutomationProperties.Name="Feature IDs without a name" Margin="0,4,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
                     <TextBlock Text="Configuration" Style="{StaticResource SectionTitle}" />
                     <WrapPanel>
                         <Button Content="E_xport settings..." Command="{Binding ExportSettingsCommand}" Margin="0,0,8,0" MinWidth="96" />

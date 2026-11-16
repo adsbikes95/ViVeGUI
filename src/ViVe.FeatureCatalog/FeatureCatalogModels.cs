@@ -36,6 +36,8 @@ public sealed record FeatureCatalogEntry
 {
     [JsonPropertyName("id")] public uint Id { get; init; }
     [JsonPropertyName("name")] public string? Name { get; init; }
+    /// <summary>Other internal names a source has used for the same ID (for example after a rename). Searchable; never a description.</summary>
+    [JsonPropertyName("aliases")] public IReadOnlyList<string> Aliases { get; init; } = Array.Empty<string>();
     [JsonPropertyName("description")] public string? Description { get; init; }
     [JsonPropertyName("category")] public string? Category { get; init; }
     [JsonPropertyName("builds")] public IReadOnlyList<BuildCompatibility> Builds { get; init; } = Array.Empty<BuildCompatibility>();

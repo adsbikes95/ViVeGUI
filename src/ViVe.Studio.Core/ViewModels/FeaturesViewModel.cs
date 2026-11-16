@@ -33,6 +33,12 @@ public sealed partial class FeaturesViewModel : ObservableObject
         _selectedPriority = PriorityOption.Writable.First(p => p.Priority == FeaturePriorities.Default);
         _selectedStores = StoreOption.For(settings.Current.DefaultStores);
         settings.Changed += (_, _) => SelectedStores = StoreOption.For(settings.Current.DefaultStores);
+        if (catalog is ReloadableFeatureCatalog reloadable)
+            reloadable.Reloaded += (_, _) =>
+            {
+                OnPropertyChanged(nameof(CatalogCount));
+                OnSearchTextChanged(SearchText);
+            };
     }
 
     public IReadOnlyList<PriorityOption> Priorities => PriorityOption.Writable;

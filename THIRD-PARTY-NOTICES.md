@@ -15,4 +15,9 @@ The following components are redistributed in binary form:
 
 `FeatureDictionary.pfs` (feature names) is part of the upstream ViVe repository (`Extra/FeatureDictionary.pfs`).
 
+Feature names and IDs imported in Settings come from the feature dumps of mach2 by Rafael Rivera (riverar),
+GPL-3.0, https://github.com/riverar/mach2 (commit d6bcdce5ef7c09d3cb24549500e5d63b87a5cc83). The dumps are not
+redistributed with ViVeTool Studio; `catalog/mach2-manifest.txt` lists their paths and SHA-256 hashes so downloads
+can be verified, and each imported entry cites the dump it came from.
+
 Test-only dependencies (not redistributed): xUnit (Apache-2.0), Microsoft.NET.Test.Sdk (MIT).

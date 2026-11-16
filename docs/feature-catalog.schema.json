@@ -16,6 +16,7 @@
         "properties": {
           "id": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
           "name": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9_.\\-]{1,256}$" },
+          "aliases": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z0-9_.\\-]{1,256}$" } },
           "description": { "type": ["string", "null"] },
           "category": { "type": ["string", "null"] },
           "builds": {
