@@ -43,17 +43,24 @@ public sealed partial class MainViewModel : ObservableObject
     partial void OnSelectedItemChanged(NavigationItem value)
     {
         // Refresh pages that show history when they are opened.
-        if (value.ViewModel == _dashboard) _ = _dashboard.RefreshAsync();
+        if (value.ViewModel == _dashboard) Forget(_dashboard.RefreshAsync());
         else if (value.ViewModel == _history && _historyDirty)
         {
             _historyDirty = false;
-            _ = _history.RefreshAsync();
+            Forget(_history.RefreshAsync());
         }
     }
 
     public async Task InitializeAsync()
     {
         await _dashboard.RefreshAsync();
+    }
+
+    // Page refreshes are best-effort; failures surface on the page itself rather than crashing the app.
+    private static async void Forget(Task task)
+    {
+        try { await task; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { }
     }
 
     [RelayCommand]

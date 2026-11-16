@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Tests for the UI-independent Studio code (view models, history, rollback, settings, catalog). Runs on any OS. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ViVe.Studio.Core\ViVe.Studio.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\ViVe.Core.Tests\FakeFeatureConfigurationApi.cs" Link="Fakes\FakeFeatureConfigurationApi.cs" />
+    <None Include="..\..\Extra\FeatureDictionary.pfs" Link="data\FeatureDictionary.pfs" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\catalog\feature-catalog.json" Link="data\feature-catalog.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
