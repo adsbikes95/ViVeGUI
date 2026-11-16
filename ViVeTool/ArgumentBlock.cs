@@ -34,8 +34,26 @@ namespace Albacore.ViVeTool
         internal static string FileName;
         internal static bool ImportReplace;
         internal static bool HelpMode;
+        // ViVeTool Studio: set when an argument value was rejected (drives the process exit code).
+        internal static bool ParseError;
 
         internal static bool ShouldUseBothStores { get { return !Store.HasValue || Store.Value == FeatureConfigurationTypeEx.Both; } }
+
+        // ViVeTool Studio: restores the initial state so the parser can be exercised by regression tests.
+        internal static void Reset()
+        {
+            Store = null;
+            IdList = null;
+            FeatureConfigurationProperties = null;
+            SubscriptionProperties = null;
+#if SET_LKG_COMMAND
+            LKGStatus = null;
+#endif
+            FileName = null;
+            ImportReplace = false;
+            HelpMode = false;
+            ParseError = false;
+        }
 
         internal static void Initialize(string[] args, ArgumentBlockFlags flags)
         {
@@ -76,6 +94,7 @@ namespace Albacore.ViVeTool
                         if (!bothStoresArgAllowed && parsedStore == FeatureConfigurationTypeEx.Both)
                         {
                             ConsoleEx.WriteErrorLine(Properties.Resources.InvalidEnumSpecInScenario, value, "Store");
+                            ParseError = true;
                             HelpMode = true;
                             return;
                         }
@@ -84,6 +103,7 @@ namespace Albacore.ViVeTool
                     else
                     {
                         ConsoleEx.WriteErrorLine(Properties.Resources.InvalidEnumSpec, value, "Store");
+                        ParseError = true;
                         HelpMode = true;
                         return;
                     }
@@ -127,6 +147,7 @@ namespace Albacore.ViVeTool
                     if (!Enum.TryParse(value, true, out RTL_FEATURE_VARIANT_PAYLOAD_KIND parsedKind))
                     {
                         ConsoleEx.WriteErrorLine(Properties.Resources.InvalidEnumSpec, value, "Variant Payload Kind");
+                        ParseError = true;
                         HelpMode = true;
                         return;
                     }
@@ -145,6 +166,7 @@ namespace Albacore.ViVeTool
                         (uint)parsedPriority > 15)
                     {
                         ConsoleEx.WriteErrorLine(Properties.Resources.InvalidEnumSpec, value, "Priority");
+                        ParseError = true;
                         HelpMode = true;
                         return;
                     }
@@ -175,6 +197,7 @@ namespace Albacore.ViVeTool
                     if (!Enum.TryParse(value, true, out BSD_FEATURE_CONFIGURATION_STATE parsedStatus))
                     {
                         ConsoleEx.WriteErrorLine(Properties.Resources.InvalidEnumSpec, value, "LKG Status");
+                        ParseError = true;
                         HelpMode = true;
                         return;
                     }

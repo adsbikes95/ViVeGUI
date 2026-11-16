@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    ViVe.Core: the shared feature-management engine used by both ViVeTool (CLI) and
+    ViVeTool Studio (GUI). It wraps the upstream Albacore.ViVe library behind mockable
+    interfaces and adds validation, snapshots, verification and structured results.
+    net481 is targeted so the original .NET Framework ViVeTool build can share it.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net481;net10.0</TargetFrameworks>
+    <RootNamespace>ViVe.Core</RootNamespace>
+    <AssemblyName>ViVe.Core</AssemblyName>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\ViVe\ViVe.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ViVe.Core.Tests" />
+  </ItemGroup>
+</Project>
