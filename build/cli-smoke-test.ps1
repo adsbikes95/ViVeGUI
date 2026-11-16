@@ -27,4 +27,11 @@ Invoke-Case '/query invalid store'            @('/query', '/store:both')  2 ''
 # Feature ID 4294967295 is not expected to have a configuration; querying it is read-only.
 Invoke-Case '/query unconfigured ID'          @('/query', '/id:4294967295') 4 'No configuration'
 
-if ($failures -gt 0) { throw "$failures CLI smoke test case(s) failed." }
+if ($failures -gt 0) {
+    Write-Error "$failures CLI smoke test case(s) failed."
+    exit 1
+}
+# The last case deliberately leaves $LASTEXITCODE at 4; exit explicitly so the
+# runner does not report that expected code as a step failure.
+Write-Host 'All CLI smoke test cases passed.'
+exit 0
