@@ -259,7 +259,7 @@ public sealed partial class FeaturesViewModel : ObservableObject
         return parsed.Ids;
     }
 
-    private void SetStatus(string message, StatusSeverity severity)
+    internal void SetStatus(string message, StatusSeverity severity)
     {
         StatusMessage = message;
         StatusSeverity = severity;

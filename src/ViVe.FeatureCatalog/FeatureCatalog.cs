@@ -16,6 +16,9 @@ public interface IFeatureCatalog
 
     /// <summary>Searches by numeric ID (exact or prefix) and by name substring.</summary>
     IReadOnlyList<FeatureCatalogEntry> Search(string query, int maxResults = 200, string? category = null);
+
+    /// <summary>Every entry, ordered by name then ID.</summary>
+    IReadOnlyList<FeatureCatalogEntry> Entries { get; }
 }
 
 /// <summary>
@@ -27,6 +30,8 @@ public sealed class FeatureCatalog : IFeatureCatalog
     private readonly Dictionary<uint, FeatureCatalogEntry> _byId = new();
     private readonly Dictionary<string, FeatureCatalogEntry> _byName = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<FeatureCatalogEntry> _ordered;
+
+    public IReadOnlyList<FeatureCatalogEntry> Entries => _ordered;
     private readonly List<string> _messages = new();
 
     public FeatureCatalog(IEnumerable<CatalogLoadResult> sourcesInIncreasingTrust)
@@ -64,7 +69,8 @@ public sealed class FeatureCatalog : IFeatureCatalog
             .Select(a => a!)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        return incoming with { Name = name, Aliases = aliases };
+        var modules = incoming.Modules.Count > 0 ? incoming.Modules : existing.Modules;
+        return incoming with { Name = name, Aliases = aliases, Modules = modules };
     }
 
     public static FeatureCatalog Empty { get; } = new(Array.Empty<CatalogLoadResult>());

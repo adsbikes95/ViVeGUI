@@ -18,7 +18,8 @@
           "name": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9_.\\-]{1,256}$" },
           "aliases": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z0-9_.\\-]{1,256}$" } },
           "description": { "type": ["string", "null"] },
-          "category": { "type": ["string", "null"] },
+          "category": { "type": ["string", "null"], "description": "Curated collection name. Ignored unless 'source' cites it and verificationStatus is communityReported or verified." },
+          "modules": { "type": "array", "items": { "type": "string", "pattern": "^[A-Za-z0-9_.\\-]{1,128}\\.(dll|exe|sys|cpl|mui|ocx|winmd)$" }, "description": "Binaries the ID was found in. Used only for browsing groups." },
           "builds": {
             "type": "array",
             "items": {

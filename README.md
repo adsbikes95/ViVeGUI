@@ -58,7 +58,10 @@ is planned but not in the MVP (see the roadmap). The CLI must be run from an ele
    confirmation. Non-default priorities, the experiment flag and multi-priority resets are flagged as higher risk.
 4. Each result says whether the change was **verified** by re-reading the store, only **reported** by Windows, or
    **failed**. A zero return code alone is never treated as verified success.
-5. **Change History** lists every attempt. **Roll back** is offered only for the most recent successful change to a
+5. **Collections** groups named features by words in their internal names (Taskbar, Start menu, File Explorer, ...)
+   so you can tick the ones you want and send them to Feature Explorer. The grouping is inferred, not a description,
+   and nothing changes until you confirm in Feature Explorer.
+6. **Change History** lists every attempt. **Roll back** is offered only for the most recent successful change to a
    feature when its previous state was fully captured and Windows has not been updated since.
 
 ## Using the CLI

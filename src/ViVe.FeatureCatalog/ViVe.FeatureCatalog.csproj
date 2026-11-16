@@ -11,6 +11,8 @@
   <ItemGroup>
     <!-- Pinned list of mach2 feature dumps with SHA-256 hashes; imports are checked against it. -->
     <EmbeddedResource Include="..\..\catalog\mach2-manifest.txt" LogicalName="ViVe.FeatureCatalog.mach2-manifest.txt" />
+    <!-- Keyword rules that group features into browsing collections (inferred, never verified). -->
+    <EmbeddedResource Include="..\..\catalog\collection-rules.json" LogicalName="ViVe.FeatureCatalog.collection-rules.json" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="ViVe.Studio.Tests" />

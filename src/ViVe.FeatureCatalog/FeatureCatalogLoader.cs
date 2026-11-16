@@ -19,6 +19,12 @@ public static partial class FeatureCatalogLoader
     /// <summary>True when <paramref name="name"/> is an acceptable internal feature name (letters, digits, '_', '.', '-').</summary>
     public static bool IsValidName(string? name) => name != null && NamePattern().IsMatch(name);
 
+    [GeneratedRegex(@"^[A-Za-z0-9_.\-]{1,128}\.(dll|exe|sys|cpl|mui|ocx|winmd)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ModulePattern();
+
+    /// <summary>A plain binary file name such as "Taskbar.dll" (no path).</summary>
+    public static bool IsValidModuleName(string? name) => name != null && ModulePattern().IsMatch(name);
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -83,7 +89,13 @@ public static partial class FeatureCatalogLoader
                 if (b.MinBuild is not null && b.MaxBuild is not null && b.MinBuild > b.MaxBuild)
                     warnings.Add($"Feature {entry.Id} has a build range with minBuild > maxBuild.");
             if (entries.Count >= MaxEntries) { errors.Add($"Catalog exceeds {MaxEntries} entries; remaining entries ignored."); break; }
-            entries.Add(entry.Aliases == null ? entry with { Aliases = Array.Empty<string>() } : entry);
+            var clean = entry with { Aliases = entry.Aliases ?? Array.Empty<string>(), Modules = (entry.Modules ?? Array.Empty<string>()).Where(m => m != null && ModulePattern().IsMatch(m)).Take(32).ToArray() };
+            if (!string.IsNullOrWhiteSpace(clean.Category) && (string.IsNullOrWhiteSpace(clean.Source) || clean.VerificationStatus < VerificationStatus.CommunityReported))
+            {
+                warnings.Add($"Feature {entry.Id} has a category without a cited source; the category was ignored.");
+                clean = clean with { Category = null };
+            }
+            entries.Add(clean);
         }
         return new CatalogLoadResult(entries, errors, warnings);
     }

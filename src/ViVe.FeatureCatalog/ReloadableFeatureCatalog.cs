@@ -29,5 +29,6 @@ public sealed class ReloadableFeatureCatalog : IFeatureCatalog
     public IReadOnlyList<string> LoadMessages => _current.LoadMessages;
     public FeatureCatalogEntry? TryGet(uint featureId) => _current.TryGet(featureId);
     public FeatureCatalogEntry? FindByName(string name) => _current.FindByName(name);
+    public IReadOnlyList<FeatureCatalogEntry> Entries => _current.Entries;
     public IReadOnlyList<FeatureCatalogEntry> Search(string query, int maxResults = 200, string? category = null) => _current.Search(query, maxResults, category);
 }

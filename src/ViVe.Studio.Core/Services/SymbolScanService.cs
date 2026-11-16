@@ -247,6 +247,9 @@ public sealed class SymbolScanService
     /// Catalog entries from every saved scan: the name seen in the newest scanned build, older names as aliases,
     /// and one build entry per scanned build the ID was found in (scans prove presence only for those builds).
     /// </summary>
+    /// <summary>File name of a stored Windows path, also when the scan is read on another OS.</summary>
+    private static string FileNameOf(string path) => path[(path.LastIndexOfAny(new[] { '\\', '/' }) + 1)..];
+
     internal static FeatureCatalogDocument BuildCatalog(IReadOnlyList<BuildScanResult> scans)
     {
         var ordered = scans.OrderBy(s => s.Build).ThenBy(s => s.ScannedAtUtc).ToList();
@@ -265,7 +268,7 @@ public sealed class SymbolScanService
             var latest = kv.Value[^1];
             var builds = kv.Value.GroupBy(v => v.Scan.BuildText).Select(g =>
             {
-                var files = g.Select(v => Path.GetFileName(v.File)).Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToList();
+                var files = g.Select(v => FileNameOf(v.File)).Distinct(StringComparer.OrdinalIgnoreCase).Take(5).ToList();
                 return new BuildCompatibility
                 {
                     MinBuild = g.First().Scan.Build,
@@ -283,6 +286,8 @@ public sealed class SymbolScanService
                 Source = "Local symbol scan (Microsoft public symbol server; method after mach2 by Rafael Rivera, github.com/riverar/mach2, GPL-3.0)",
                 VerificationStatus = VerificationStatus.Verified,
                 Builds = builds,
+                Modules = kv.Value.Select(v => FileNameOf(v.File)).Where(FeatureCatalogLoader.IsValidModuleName)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Take(8).ToArray(),
             };
         }).ToList();
 

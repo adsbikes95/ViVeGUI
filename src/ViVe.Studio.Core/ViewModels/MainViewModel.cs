@@ -14,7 +14,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly HistoryViewModel _history;
 
     public MainViewModel(DashboardViewModel dashboard, FeaturesViewModel features, HistoryViewModel history, SettingsViewModel settings,
-        IElevationService elevation, IChangeHistoryStore historyStore)
+        IElevationService elevation, IChangeHistoryStore historyStore, CollectionsViewModel? collections = null)
     {
         _elevation = elevation;
         _dashboard = dashboard;
@@ -24,10 +24,13 @@ public sealed partial class MainViewModel : ObservableObject
         {
             new NavigationItem("Dashboard", "", dashboard, "Dashboard"),
             new NavigationItem("Feature Explorer", "", features, "Feature Explorer"),
+            collections == null ? null : new NavigationItem("Collections", "", collections, "Collections"),
             new NavigationItem("Change History", "", history, "Change History"),
             new NavigationItem("Settings", "", settings, "Settings"),
-        };
+        }.OfType<NavigationItem>().ToArray();
         _selectedItem = Items[0];
+        if (collections != null)
+            collections.SentToExplorer += (_, _) => SelectedItem = Items.First(i => i.ViewModel == features);
         historyStore.Changed += (_, _) => _historyDirty = true;
     }
 

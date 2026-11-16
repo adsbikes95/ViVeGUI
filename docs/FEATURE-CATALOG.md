@@ -82,12 +82,36 @@ Settings → *Cross-check* lists the feature IDs that have a configuration in th
 `ViVeTool /query` lists) and reports how many have a known name, how many fall in a build range a verified source lists
 for this build, and which IDs have no name. It only reads.
 
+## Collections (inferred grouping)
+
+The **Collections** page groups named features (File Explorer, Start menu, Taskbar, Context menus, Settings, Window
+management, and a few more, with **Other** as the fallback) so people can browse and tick the ones they want to try.
+The grouping is a browsing aid, not metadata:
+
+- The rules live in [catalog/collection-rules.json](../catalog/collection-rules.json) and are embedded in the app.
+  Collections are checked in order. The first collection with a **word** found in the feature's internal name wins
+  (names are split at capitals, digits and underscores, so `TaskbarAutoHide` is `taskbar auto hide`, and `start menu`
+  never matches `Restart`). If no word matches, the first collection listing the **binary** the feature was found in
+  (from a local symbol scan, `modules` in the catalog) is used. Otherwise the feature is in **Other**.
+- Every rule-based assignment is shown as *inferred*, with the word or binary that caused it. It says nothing about
+  what a feature does, whether it shows anything, or whether it is safe to turn on. Fixes, servicing switches and test
+  gates get their own collections, checked first, because they are rarely something to turn on by hand.
+- A curated entry's `category` overrides the rules, but only when the entry has a `source` and is at least
+  `communityReported`. A category without a citation is dropped on load with a warning.
+- The page changes nothing. **Send ticked to Feature Explorer** puts the IDs into Feature Explorer, where Query shows
+  their state and Enable/Disable/Reset show the usual preview and ask for confirmation.
+
+On build 29708 (4,860 named IDs from a local scan) the rules placed about 58% of names in a specific collection; 29%
+were fixes/servicing and telemetry/test switches, and about 42% stayed in Other.
+
 ## Rules for curated entries
 
 - Every entry above `nameOnly` must have a `source` (URL or citation). Entries without one are rejected on load.
 - `verified` entries should list the builds the source confirmed in `builds`; compatibility is otherwise shown as
   unknown. Presence on a build never implies safety.
 - Names must match `^[A-Za-z0-9_.-]{1,256}$`; ID 0 and duplicate IDs are rejected.
+- `category` needs a `source` and `communityReported` or `verified`; otherwise it is ignored. `modules` holds plain
+  binary file names (`Taskbar.dll`); anything else is dropped.
 - Catalogs are data only. Nothing in a catalog is executed, and catalog updates must never download code.
 
 ## Schema

@@ -68,9 +68,13 @@ public partial class App : Application
 
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<FeaturesViewModel>();
+        services.AddSingleton(sp => new CollectionsViewModel(sp.GetRequiredService<IFeatureCatalog>(), sp.GetRequiredService<FeaturesViewModel>(),
+            sp.GetRequiredService<IFeatureManager>()));
         services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<SettingsViewModel>();
-        services.AddSingleton<MainViewModel>();
+        services.AddSingleton(sp => new MainViewModel(sp.GetRequiredService<DashboardViewModel>(), sp.GetRequiredService<FeaturesViewModel>(),
+            sp.GetRequiredService<HistoryViewModel>(), sp.GetRequiredService<SettingsViewModel>(), sp.GetRequiredService<IElevationService>(),
+            sp.GetRequiredService<IChangeHistoryStore>(), sp.GetRequiredService<CollectionsViewModel>()));
         return services.BuildServiceProvider();
     }
 

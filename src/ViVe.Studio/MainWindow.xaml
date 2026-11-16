@@ -9,6 +9,7 @@
     <Window.Resources>
         <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><views:DashboardView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:FeaturesViewModel}"><views:FeaturesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CollectionsViewModel}"><views:CollectionsView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><views:HistoryView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><views:SettingsView /></DataTemplate>
     </Window.Resources>
