@@ -11,23 +11,28 @@ ViVeTool Studio is a Windows 11 desktop application for viewing and changing Win
 
 ## Status
 
-This is an MVP (Phase 1 and Phase 2 of the [roadmap](docs/ROADMAP.md)).
+This is an early pre-release (0.2.0): Phase 1 and Phase 2 of the [roadmap](docs/ROADMAP.md), plus feature names
+and Collections.
 
 | Area | State |
 |---|---|
 | ViVeTool CLI (all 0.3.4 commands) | Preserved; now built on the shared engine, with exit codes ([details](docs/CLI.md)) |
 | Shared engine (`ViVe.Core`) | Query, enable, disable, reset, variants, priorities, sequential queue, snapshots, post-change verification |
-| GUI: Dashboard | Windows version/build/architecture, feature-management status, change count, recent changes, warnings |
+| GUI: Dashboard | Windows version/build/architecture, feature-management status, change count, recent changes, warnings, and feature IDs that are **new since the last Windows update** |
 | GUI: Feature Explorer | Manual ID input (batch), search by name or ID, query/enable/disable/reset, advanced priority/store/variant options |
+| GUI: Collections | Named features grouped into File Explorer, Start menu, Taskbar, Context menus, Settings, Window management and more, so you can tick the ones you want and send them to Feature Explorer. Grouping is **inferred** from words in the internal name (or the binary it was found in) and labelled as such. See [Collections](docs/FEATURE-CATALOG.md#collections-inferred-grouping). |
 | GUI: Change History | Timestamped audit log with previous state, JSON export, rollback when the previous state was captured reliably |
-| GUI: Settings | System/light/dark theme, warnings, logging, default stores, local catalog file, settings export/import |
-| Scan this build | Reads feature names and IDs from this PC's own binaries using Microsoft's public symbols (hash/GUID-checked, data only, cached), so names match the installed build. Dashboard lists feature IDs new since the last Windows update. |
-| Feature names from mach2 | Optional import of riverar/mach2 feature dumps (builds 17643 to 27764, hash-pinned, data only) with per-build presence and staging; read-only cross-check against this PC's feature store. See [Feature catalog](docs/FEATURE-CATALOG.md#mach2-import). |
-| Feature Collections, curated categories/descriptions, remote catalog updates | **Not implemented** (Phase 3). No feature metadata has been verified yet, so none is shipped. |
+| GUI: Settings | System/light/dark theme, warnings, logging, default stores, local catalog file, settings export/import, and the feature-name tools below |
+| Scan this build | Reads feature names and IDs from this PC's own binaries using Microsoft's public symbols (hash/GUID-checked, data only, cached), so names match the installed build. See [Scan this build](docs/FEATURE-CATALOG.md#scan-this-build). |
+| New-ID tracking | The first time the app sees a Windows build it saves the list of configured feature IDs; after an update the Dashboard lists the IDs that arrived with it. See [New since the last Windows update](docs/FEATURE-CATALOG.md#new-since-the-last-windows-update). |
+| Feature names from mach2 | Optional import of riverar/mach2 feature dumps (builds 17643 to 27764, hash-pinned, data only) with per-build presence and staging; read-only cross-check against this PC's feature store. See [mach2 import](docs/FEATURE-CATALOG.md#mach2-import). |
+| Curated descriptions, remote catalog updates | **Not implemented.** No feature description has been verified, so none is shipped; names and IDs are not descriptions, and a feature being present says nothing about what it does or whether it is safe. |
 
-**Validation so far:** everything compiles (including WPF) and 132 unit tests pass on Linux; Windows-only tests,
-the CLI smoke test and packaging run in GitHub Actions on `windows-latest`. **The GUI has not yet been run
-interactively on a real Windows machine** — treat it as untested until it has.
+**Validation so far:** everything compiles (including WPF); all 203 tests pass on a Windows 11 Canary PC
+(build 29708; 197 on Linux, where 6 Windows-only tests are skipped), and Windows CI runs the CLI smoke test and packaging. On that PC the GUI has been launched
+read-only, the mach2 import and a full "Scan this build" ran successfully (4,860 named IDs), and the Collections
+page appears. Changing features through the GUI, and the Collections page in daily use, have **not** been tested
+interactively yet.
 
 ## Download and run
 
@@ -63,6 +68,9 @@ is planned but not in the MVP (see the roadmap). The CLI must be run from an ele
    and nothing changes until you confirm in Feature Explorer.
 6. **Change History** lists every attempt. **Roll back** is offered only for the most recent successful change to a
    feature when its previous state was fully captured and Windows has not been updated since.
+7. **Settings → Feature names**: *Scan this build* downloads the public symbols for this PC's Windows binaries
+   (several GB on first run, cached) and names the features compiled into them; *Import from mach2* adds names for
+   older builds. Both are data only and read-only towards Windows.
 
 ## Using the CLI
 
