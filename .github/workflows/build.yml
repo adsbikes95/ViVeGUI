@@ -9,6 +9,11 @@ on:
     tags: [ 'v*' ]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Publish a pre-release with this tag (for example v0.2.0) from the selected branch. Leave empty to only build.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -74,7 +79,7 @@ jobs:
 
   release:
     name: Publish GitHub release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && startsWith(inputs.release_tag, 'v'))
     needs: [ windows, linux ]
     runs-on: ubuntu-latest
     permissions:
@@ -87,9 +92,12 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" artifacts/* \
+          # A dispatched release creates its tag on the exact commit that was built and tested.
+          gh release create "${TAG}" artifacts/* \
             --repo "${GITHUB_REPOSITORY}" \
-            --title "ViVeTool Studio ${GITHUB_REF_NAME}" \
-            --notes "Unsigned builds. Verify downloads against SHA256SUMS.txt. Corresponding source code: https://github.com/${GITHUB_REPOSITORY}/tree/${GITHUB_REF_NAME} (GPL-3.0)." \
+            --target "${GITHUB_SHA}" \
+            --title "ViVeTool Studio ${TAG}" \
+            --notes "Unsigned pre-release builds. Verify downloads against SHA256SUMS.txt. Corresponding source code: https://github.com/${GITHUB_REPOSITORY}/tree/${TAG} (GPL-3.0)." \
             --prerelease
