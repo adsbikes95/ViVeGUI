@@ -328,3 +328,8 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# ViVeTool Studio build outputs
+artifacts/
+artifacts-staging/
+TestResults/

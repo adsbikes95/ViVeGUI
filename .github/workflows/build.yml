@@ -1,0 +1,95 @@
+# Build, test and package ViVeTool Studio + ViVeTool.
+# CI never modifies Windows feature configuration: tests use an in-memory fake store,
+# the native tests and CLI smoke test only run read-only queries.
+name: Build
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  windows:
+    name: Windows build, test and package
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore ViVe.sln
+
+      - name: Build (Release)
+        run: dotnet build ViVe.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test ViVe.sln -c Release --no-build --logger "trx" --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults
+
+      - name: CLI smoke test (read-only commands and exit codes)
+        shell: pwsh
+        run: ./build/cli-smoke-test.ps1 -ViVeTool "ViVeTool/bin/Release/net481/ViVeTool.exe"
+
+      - name: Package
+        shell: pwsh
+        run: ./build/package.ps1 -OutputDirectory artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: vivetool-studio-packages
+          path: artifacts
+
+  linux:
+    # Fast cross-platform check: everything compiles (WPF via EnableWindowsTargeting) and
+    # platform-independent tests pass. This does NOT validate Windows runtime behaviour.
+    name: Linux compile and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet build ViVe.sln -c Release
+      - run: dotnet test ViVe.sln -c Release --no-build
+
+  release:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ windows, linux ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: vivetool-studio-packages
+          path: artifacts
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" artifacts/* \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "ViVeTool Studio ${GITHUB_REF_NAME}" \
+            --notes "Unsigned builds. Verify downloads against SHA256SUMS.txt. Corresponding source code: https://github.com/${GITHUB_REPOSITORY}/tree/${GITHUB_REF_NAME} (GPL-3.0)." \
+            --prerelease

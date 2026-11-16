@@ -18,5 +18,7 @@ namespace Albacore.ViVeTool
         internal const int InvalidArguments = 2;
         /// <summary>Windows build older than 18963.</summary>
         internal const int UnsupportedPlatform = 3;
+        /// <summary>/query /id: at least one requested feature has no configuration in the store.</summary>
+        internal const int NotFound = 4;
     }
 }

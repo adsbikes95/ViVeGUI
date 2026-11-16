@@ -237,7 +237,7 @@ namespace Albacore.ViVeTool
                 else
                 {
                     ConsoleEx.WriteErrorLine(Properties.Resources.SingleQueryFailed, id, storeToUse);
-                    Fail(CliExitCodes.OperationFailed);
+                    Fail(CliExitCodes.NotFound);
                     if (storeToUse == RTL_FEATURE_CONFIGURATION_TYPE.Boot)
                         ConsoleEx.WriteWarnLine(Properties.Resources.BootStoreRebootTip);
                 }

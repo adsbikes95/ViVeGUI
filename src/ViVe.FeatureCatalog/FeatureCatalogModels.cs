@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace ViVe.FeatureCatalog;
 
 /// <summary>How well a catalog entry's metadata has been confirmed.</summary>
-[JsonConverter(typeof(JsonStringEnumConverter<VerificationStatus>))]
+[JsonConverter(typeof(VerificationStatusJsonConverter))]
 public enum VerificationStatus
 {
     /// <summary>Nothing is known beyond the ID.</summary>
@@ -16,6 +16,9 @@ public enum VerificationStatus
     /// <summary>Confirmed on the listed builds by the cited source.</summary>
     Verified,
 }
+
+/// <summary>Serializes <see cref="VerificationStatus"/> as camelCase strings ("nameOnly"); reading is case-insensitive.</summary>
+public sealed class VerificationStatusJsonConverter() : JsonStringEnumConverter<VerificationStatus>(System.Text.Json.JsonNamingPolicy.CamelCase, allowIntegerValues: false);
 
 /// <summary>A build range a source reports the feature for. Presence on a build does not imply it is safe to change.</summary>
 public sealed record BuildCompatibility
