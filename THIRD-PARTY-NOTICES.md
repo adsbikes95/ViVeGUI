@@ -20,4 +20,8 @@ GPL-3.0, https://github.com/riverar/mach2 (commit d6bcdce5ef7c09d3cb24549500e5d6
 redistributed with ViVeTool Studio; `catalog/mach2-manifest.txt` lists their paths and SHA-256 hashes so downloads
 can be verified, and each imported entry cites the dump it came from.
 
+"Scan this build" follows mach2's approach (feature descriptors found through public symbols) with its own managed
+code; no mach2 code is included or run. It downloads Microsoft's public symbol files from msdl.microsoft.com for
+local use only; they are deleted after reading and are not redistributed.
+
 Test-only dependencies (not redistributed): xUnit (Apache-2.0), Microsoft.NET.Test.Sdk (MIT).

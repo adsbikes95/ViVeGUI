@@ -23,7 +23,9 @@ Status legend: ✅ done in this branch · 🟡 partial · ⬜ not started
 
 - 🟡 Searchable catalog (name/ID search over the upstream dictionary and the optional mach2 import, with aliases; no categories/descriptions)
 - ✅ mach2 import: verified names/IDs and build presence for builds 17643 to 27764 (mach2 stopped at 2024-12-14), plus a cross-check against this PC
-- ⬜ Names for builds newer than 27764: needs a new symbol-based source (mach2's successor, or a local PDB scan)
+- ✅ Names for the installed build: local symbol scan ("Scan this build") using Microsoft public symbols
+- ✅ Flag feature IDs that are new after a Windows update (per-build snapshots on the Dashboard)
+- ⬜ Descriptions and categories: still need cited community sources
 - ⬜ Curated, source-attributed catalog entries (categories, descriptions, verified builds) — needs research with citations
 - ⬜ Feature Collections (File Explorer, Start, Taskbar, Context menus, Settings, Window management, Other) — only from verified entries
 - 🟡 Batch queue (sequential multi-ID operations exist; no editable queue UI yet)

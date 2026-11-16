@@ -21,6 +21,7 @@ This is an MVP (Phase 1 and Phase 2 of the [roadmap](docs/ROADMAP.md)).
 | GUI: Feature Explorer | Manual ID input (batch), search by name or ID, query/enable/disable/reset, advanced priority/store/variant options |
 | GUI: Change History | Timestamped audit log with previous state, JSON export, rollback when the previous state was captured reliably |
 | GUI: Settings | System/light/dark theme, warnings, logging, default stores, local catalog file, settings export/import |
+| Scan this build | Reads feature names and IDs from this PC's own binaries using Microsoft's public symbols (hash/GUID-checked, data only, cached), so names match the installed build. Dashboard lists feature IDs new since the last Windows update. |
 | Feature names from mach2 | Optional import of riverar/mach2 feature dumps (builds 17643 to 27764, hash-pinned, data only) with per-build presence and staging; read-only cross-check against this PC's feature store. See [Feature catalog](docs/FEATURE-CATALOG.md#mach2-import). |
 | Feature Collections, curated categories/descriptions, remote catalog updates | **Not implemented** (Phase 3). No feature metadata has been verified yet, so none is shipped. |
 
