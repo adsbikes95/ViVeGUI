@@ -1,0 +1,79 @@
+<UserControl x:Class="ViVe.Studio.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,16">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Text="Settings" Style="{StaticResource PageTitle}" />
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource StatusBarTemplate}" />
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Appearance" Style="{StaticResource SectionTitle}" />
+                    <DockPanel>
+                        <Label Content="_Theme" Target="{Binding ElementName=ThemeBox}" Width="160" />
+                        <ComboBox x:Name="ThemeBox" ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme}" Width="200" HorizontalAlignment="Left" />
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,6,0,0" Text="System follows the Windows light/dark setting. Mica and rounded corners are used on Windows 11 where supported." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Safety" Style="{StaticResource SectionTitle}" />
+                    <CheckBox Content="Show _experimental-feature warnings on the dashboard" IsChecked="{Binding ShowExperimentalWarnings}" Margin="0,0,0,8" />
+                    <DockPanel>
+                        <Label Content="Default _stores" Target="{Binding ElementName=StoresBox}" Width="160" />
+                        <ComboBox x:Name="StoresBox" ItemsSource="{Binding StoreOptions}" SelectedItem="{Binding DefaultStores}" Width="300" HorizontalAlignment="Left" />
+                    </DockPanel>
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,6,0,0"
+                               Text="Every change is previewed and must be confirmed. Higher-risk changes (non-default priorities, experiment flag, multi-priority resets) show an additional warning." />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Logging and data" Style="{StaticResource SectionTitle}" />
+                    <CheckBox Content="Write a diagnostic _log file" IsChecked="{Binding EnableFileLogging}" Margin="0,0,0,8" />
+                    <TextBlock Style="{StaticResource Caption}">
+                        <Run Text="History, settings and logs are stored in: " /><Run Text="{Binding DataDirectory, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Feature catalog" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{Binding CatalogSummary}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding CatalogUpdateText}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+                    <DockPanel Margin="0,8,0,0">
+                        <Button DockPanel.Dock="Right" Content="_Remove" Command="{Binding ClearCatalogCommand}" Margin="8,0,0,0" />
+                        <Button DockPanel.Dock="Right" Content="_Browse..." Command="{Binding BrowseCatalogCommand}" Margin="8,0,0,0" />
+                        <TextBox Text="{Binding UserCatalogPath, Mode=OneWay}" IsReadOnly="True" AutomationProperties.Name="Local catalog file" />
+                    </DockPanel>
+                    <ItemsControl ItemsSource="{Binding CatalogMessages}" Margin="0,8,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate><TextBlock Text="{Binding}" Style="{StaticResource Caption}" /></DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Configuration" Style="{StaticResource SectionTitle}" />
+                    <WrapPanel>
+                        <Button Content="E_xport settings..." Command="{Binding ExportSettingsCommand}" Margin="0,0,8,0" MinWidth="96" />
+                        <Button Content="_Import settings..." Command="{Binding ImportSettingsCommand}" Margin="0,0,8,0" MinWidth="96" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="About" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{Binding AboutText}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

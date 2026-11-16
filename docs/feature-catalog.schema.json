@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/adsbikes95/ViVeGUI/docs/feature-catalog.schema.json",
+  "title": "ViVeTool Studio feature catalog",
+  "type": "object",
+  "required": ["schemaVersion", "features"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "catalogVersion": { "type": "string" },
+    "description": { "type": "string" },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+          "name": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9_.\\-]{1,256}$" },
+          "description": { "type": ["string", "null"] },
+          "category": { "type": ["string", "null"] },
+          "builds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "minBuild": { "type": ["integer", "null"], "minimum": 0 },
+                "maxBuild": { "type": ["integer", "null"], "minimum": 0 },
+                "note": { "type": ["string", "null"] },
+                "source": { "type": ["string", "null"] }
+              },
+              "additionalProperties": false
+            }
+          },
+          "source": { "type": ["string", "null"] },
+          "verificationStatus": { "enum": ["unknown", "nameOnly", "communityReported", "verified"] }
+        },
+        "if": { "properties": { "verificationStatus": { "enum": ["communityReported", "verified"] } }, "required": ["verificationStatus"] },
+        "then": { "required": ["source"], "properties": { "source": { "type": "string", "minLength": 1 } } },
+        "additionalProperties": false
+      }
+    }
+  }
+}

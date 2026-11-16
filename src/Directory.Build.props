@@ -1,0 +1,13 @@
+<Project>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <!-- Settings for the new ViVeTool Studio projects (upstream ViVe/ViVeTool keep their own style). -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Version>0.1.0</Version>
+    <Company>ViVeTool Studio contributors</Company>
+    <Product>ViVeTool Studio</Product>
+    <Copyright>Copyright (C) 2019-2025 @thebookisclosed; Copyright (C) 2026 ViVeTool Studio contributors. GPL-3.0-or-later.</Copyright>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

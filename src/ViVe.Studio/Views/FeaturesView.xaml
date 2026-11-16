@@ -1,0 +1,119 @@
+<UserControl x:Class="ViVe.Studio.Views.FeaturesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,16">
+        <StackPanel MaxWidth="1100">
+            <TextBlock Text="Feature Explorer" Style="{StaticResource PageTitle}" />
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Feature IDs" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,0,0,8"
+                               Text="Enter one or more numeric feature IDs (decimal or 0x hexadecimal), separated by commas or spaces. Use the search below to find IDs by name." />
+                    <TextBox x:Name="FeatureInputBox" Text="{Binding FeatureInput, UpdateSourceTrigger=PropertyChanged}"
+                             AutomationProperties.Name="Feature IDs" AutomationProperties.HelpText="Comma-separated feature IDs" Margin="0,0,0,12">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding QueryCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <WrapPanel>
+                        <Button Content="_Query" Command="{Binding QueryCommand}" Margin="0,0,8,0" MinWidth="96" ToolTip="Show the current state (read-only)" />
+                        <Button Content="_Enable" Command="{Binding EnableCommand}" Margin="0,0,8,0" MinWidth="96" ToolTip="Enable (asks for confirmation first)" />
+                        <Button Content="_Disable" Command="{Binding DisableCommand}" Margin="0,0,8,0" MinWidth="96" ToolTip="Disable (asks for confirmation first)" />
+                        <Button Content="Rese_t" Command="{Binding ResetCommand}" Margin="0,0,8,0" MinWidth="96" ToolTip="Remove the override (asks for confirmation first)" />
+                        <ProgressBar IsIndeterminate="True" Width="120" Height="4" VerticalAlignment="Center" Margin="8,0"
+                                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" AutomationProperties.Name="Working" />
+                    </WrapPanel>
+
+                    <Expander Header="Advanced options (priority, store, variant)" Margin="0,12,0,0">
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="260" /><ColumnDefinition Width="24" />
+                                <ColumnDefinition Width="Auto" /><ColumnDefinition Width="200" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0" Content="_Priority" Target="{Binding ElementName=PriorityBox}" VerticalAlignment="Center" />
+                            <ComboBox x:Name="PriorityBox" Grid.Row="0" Grid.Column="1" Margin="0,4" ItemsSource="{Binding Priorities}" SelectedItem="{Binding SelectedPriority}" />
+                            <Label Grid.Row="0" Grid.Column="3" Content="_Store" Target="{Binding ElementName=StoreBox}" VerticalAlignment="Center" />
+                            <ComboBox x:Name="StoreBox" Grid.Row="0" Grid.Column="4" Margin="0,4" ItemsSource="{Binding StoreOptions}" SelectedItem="{Binding SelectedStores}" />
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="_Variant (0-63)" Target="{Binding ElementName=VariantBox}" VerticalAlignment="Center" />
+                            <TextBox x:Name="VariantBox" Grid.Row="1" Grid.Column="1" Margin="0,4" Text="{Binding VariantText, UpdateSourceTrigger=PropertyChanged}" />
+                            <Label Grid.Row="1" Grid.Column="3" Content="Payload _kind" Target="{Binding ElementName=PayloadKindBox}" VerticalAlignment="Center" />
+                            <ComboBox x:Name="PayloadKindBox" Grid.Row="1" Grid.Column="4" Margin="0,4" ItemsSource="{Binding PayloadKinds}" SelectedItem="{Binding SelectedPayloadKind}" />
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="Variant pa_yload" Target="{Binding ElementName=PayloadBox}" VerticalAlignment="Center" />
+                            <TextBox x:Name="PayloadBox" Grid.Row="2" Grid.Column="1" Margin="0,4" Text="{Binding PayloadText, UpdateSourceTrigger=PropertyChanged}" />
+                            <CheckBox Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="2" Margin="0,4" Content="Mark as e_xperiment (WexpConfig)" IsChecked="{Binding Experiment}" />
+
+                            <CheckBox Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,8,0,0" IsChecked="{Binding ResetAllPriorities}"
+                                      Content="Reset: remove overrides at every writable priority (like ViVeTool /reset without /priority; higher risk)" />
+                        </Grid>
+                    </Expander>
+                </StackPanel>
+            </Border>
+
+            <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource StatusBarTemplate}" />
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Find by name or ID" Style="{StaticResource SectionTitle}" />
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=250}"
+                             AutomationProperties.Name="Search feature names and IDs" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding SearchSummary}" Style="{StaticResource Caption}" Margin="0,0,0,6" />
+                    <ListBox x:Name="SearchList" ItemsSource="{Binding SearchResults}" SelectedItem="{Binding SelectedSearchResult}" MaxHeight="240"
+                             AutomationProperties.Name="Search results" VirtualizingPanel.IsVirtualizing="True">
+                        <ListBox.InputBindings>
+                            <MouseBinding Gesture="LeftDoubleClick" Command="{Binding AddToInputCommand}" CommandParameter="{Binding SelectedItem, ElementName=SearchList}" />
+                            <KeyBinding Key="Enter" Command="{Binding AddToInputCommand}" CommandParameter="{Binding SelectedItem, ElementName=SearchList}" />
+                        </ListBox.InputBindings>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="110" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding Id}" FontFamily="Cascadia Mono, Consolas" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="2" Text="{Binding VerificationStatus}" Style="{StaticResource Caption}" Margin="12,0,0,0" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button Content="_Add selected to feature IDs" Command="{Binding AddToInputCommand}" CommandParameter="{Binding SelectedItem, ElementName=SearchList}"
+                            HorizontalAlignment="Left" Margin="0,8,0,0" />
+                    <TextBlock Style="{StaticResource Caption}" Margin="0,8,0,0"
+                               Text="Names come from the ViVe feature dictionary. A name does not describe what a feature does, and its presence does not mean it is safe to change." />
+                </StackPanel>
+            </Border>
+
+            <DockPanel Margin="0,4,0,8">
+                <Button DockPanel.Dock="Right" Content="C_lear results" Command="{Binding ClearResultsCommand}" />
+                <TextBlock Text="Results" Style="{StaticResource SectionTitle}" VerticalAlignment="Center" />
+            </DockPanel>
+            <ItemsControl ItemsSource="{Binding Results}" AutomationProperties.Name="Operation results">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Padding="0">
+                            <DockPanel>
+                                <Border DockPanel.Dock="Left" Width="4" CornerRadius="8,0,0,8" Background="{Binding Severity, Converter={StaticResource SeverityToBrush}}" />
+                                <StackPanel Margin="14,10">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding TimeText}" Style="{StaticResource Caption}" />
+                                        <TextBlock FontFamily="{StaticResource IconFont}" Text="{Binding Severity, Converter={StaticResource SeverityToGlyph}}" Margin="0,2,8,0" />
+                                        <TextBlock FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
+                                            <Run Text="{Binding Headline, Mode=OneWay}" /><Run Text=": " /><Run Text="{Binding Title, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </DockPanel>
+                                    <TextBlock Text="{Binding StateText}" Margin="0,4,0,0" />
+                                    <TextBox Text="{Binding Details, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent"
+                                             Padding="0" Margin="0,4,0,0" Opacity="0.8" AutomationProperties.Name="Details" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

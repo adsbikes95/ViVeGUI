@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Feature catalog: descriptive metadata about feature IDs (names, categories, sources,
+    build compatibility). Deliberately separate from feature *state* (ViVe.Core).
+    Catalogs are data only (JSON / the upstream name dictionary); nothing is executed.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ViVe.Studio.Tests" />
+  </ItemGroup>
+</Project>

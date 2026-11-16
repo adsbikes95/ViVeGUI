@@ -1,0 +1,11 @@
+<Project>
+  <!-- Shared settings for every project in the repository. -->
+  <PropertyGroup>
+    <!-- Allows the Windows-only WPF project to compile on Linux/macOS CI and dev boxes.
+         Compiling is NOT the same as running: WPF and ntdll calls only work on Windows. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Authors>@thebookisclosed (ViVe, ViVeTool); ViVeTool Studio contributors</Authors>
+    <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/adsbikes95/ViVeGUI</RepositoryUrl>
+  </PropertyGroup>
+</Project>

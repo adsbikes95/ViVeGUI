@@ -1,0 +1,38 @@
+<UserControl x:Class="ViVe.Studio.Views.HistoryView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Margin="24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+            <RowDefinition Height="*" /><RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Change History" Style="{StaticResource PageTitle}" />
+        <WrapPanel Grid.Row="1" Margin="0,0,0,12">
+            <Button Content="_Refresh" Command="{Binding RefreshCommand}" Margin="0,0,8,0" MinWidth="96" />
+            <Button Content="_Export to JSON..." Command="{Binding ExportCommand}" Margin="0,0,8,0" MinWidth="96" />
+            <Button Content="Roll _back selected..." Command="{Binding RollbackCommand}" CommandParameter="{Binding SelectedEntry}" Margin="0,0,8,0" MinWidth="96"
+                    IsEnabled="{Binding SelectedEntry.CanRollback, FallbackValue=False}" />
+        </WrapPanel>
+        <ContentPresenter Grid.Row="2" Content="{Binding}" ContentTemplate="{StaticResource StatusBarTemplate}" />
+        <DataGrid Grid.Row="3" ItemsSource="{Binding Entries}" SelectedItem="{Binding SelectedEntry}" AutoGenerateColumns="False"
+                  IsReadOnly="True" SelectionMode="Single" HeadersVisibility="Column" GridLinesVisibility="None"
+                  AutomationProperties.Name="Change history">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Time" Binding="{Binding TimeText}" Width="150" />
+                <DataGridTextColumn Header="Feature" Binding="{Binding FeatureText}" Width="2*" />
+                <DataGridTextColumn Header="Operation" Binding="{Binding OperationText}" Width="2*" />
+                <DataGridTextColumn Header="Result" Binding="{Binding StatusText}" Width="*" />
+                <DataGridTextColumn Header="Windows" Binding="{Binding BuildText}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="0,12,0,0" Visibility="{Binding SelectedEntry, Converter={StaticResource NullToVisibility}}">
+            <StackPanel>
+                <TextBlock Text="{Binding SelectedEntry.Message}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding SelectedEntry.BeforeText}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+                <TextBlock Style="{StaticResource Caption}" Margin="0,6,0,0">
+                    <Run Text="Rollback: " /><Run Text="{Binding SelectedEntry.RollbackReason, Mode=OneWay}" />
+                </TextBlock>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

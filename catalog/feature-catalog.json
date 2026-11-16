@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": "0.1.0",
+  "description": "Curated ViVeTool Studio feature catalog. Every entry must cite a source; entries without verified build data are shown with unknown compatibility. Intentionally empty in the MVP: no feature descriptions, categories or compatibility claims have been verified yet. Feature names come from the upstream ViVe FeatureDictionary.pfs.",
+  "features": []
+}
