@@ -1,0 +1,64 @@
+<Window x:Class="ViVe.Studio.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:ViVe.Studio.ViewModels;assembly=ViVe.Studio.Core"
+        xmlns:views="clr-namespace:ViVe.Studio.Views"
+        Title="{Binding Title}"
+        Width="1180" Height="780" MinWidth="760" MinHeight="520"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}"><views:DashboardView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:FeaturesViewModel}"><views:FeaturesView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HistoryViewModel}"><views:HistoryView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><views:SettingsView /></DataTemplate>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="240" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <DockPanel Grid.Column="0" Margin="8,12,4,12">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,4,0,20">
+                <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE9F5;" FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <TextBlock Text="ViVeTool Studio" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Bottom" Margin="12,8" Style="{StaticResource Caption}" FontSize="11"
+                       Text="Based on ViVe / ViVeTool · GPL-3.0" />
+            <ListBox x:Name="Navigation" ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
+                     BorderThickness="0" Background="Transparent"
+                     AutomationProperties.Name="Navigation" KeyboardNavigation.TabNavigation="Once">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Margin="4,6" AutomationProperties.Name="{Binding AutomationName}">
+                            <TextBlock FontFamily="{StaticResource IconFont}" Text="{Binding Glyph}" FontSize="16" Width="28" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <!-- Content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Border Grid.Row="0" Margin="16,12,16,0" CornerRadius="6" Padding="12,8"
+                    Background="{DynamicResource SystemFillColorCautionBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                    Visibility="{Binding IsElevated, Converter={StaticResource InverseBoolToVisibility}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Restart as _administrator" Command="{Binding RestartElevatedCommand}"
+                            ToolTip="Restart ViVeTool Studio with administrator rights (User Account Control prompt)" />
+                    <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE72E;" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    <TextBlock VerticalAlignment="Center" TextWrapping="Wrap"
+                               Text="Read-only mode: features can be queried. Enabling, disabling, resetting and rolling back require administrator rights." />
+                </DockPanel>
+            </Border>
+            <ContentControl Grid.Row="1" Content="{Binding SelectedItem.ViewModel}" Focusable="False" IsTabStop="False" />
+        </Grid>
+    </Grid>
+</Window>

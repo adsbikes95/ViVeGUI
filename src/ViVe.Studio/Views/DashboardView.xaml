@@ -1,0 +1,99 @@
+<UserControl x:Class="ViVe.Studio.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="24,16">
+        <StackPanel MaxWidth="1100" HorizontalAlignment="Stretch">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="_Refresh" Command="{Binding RefreshCommand}" VerticalAlignment="Top" />
+                <TextBlock Text="Dashboard" Style="{StaticResource PageTitle}" />
+            </DockPanel>
+
+            <UniformGrid Columns="2">
+                <Border Style="{StaticResource Card}" Margin="0,0,6,12">
+                    <StackPanel>
+                        <TextBlock Text="Windows" Style="{StaticResource SectionTitle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Edition" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ProductName}" Style="{StaticResource LabelValueValue}" />
+                            <TextBlock Grid.Row="1" Text="Version" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding VersionText}" Style="{StaticResource LabelValueValue}" />
+                            <TextBlock Grid.Row="2" Text="Build" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BuildText}" Style="{StaticResource LabelValueValue}" />
+                            <TextBlock Grid.Row="3" Text="Architecture" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ArchitectureText}" Style="{StaticResource LabelValueValue}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}" Margin="6,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="Feature management" Style="{StaticResource SectionTitle}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="Status" Style="{StaticResource LabelValueLabel}" />
+                            <Border Grid.Row="0" Grid.Column="1" CornerRadius="4" Padding="6,1" HorizontalAlignment="Left"
+                                    Background="{Binding ManagementSeverity, Converter={StaticResource SeverityToBrush}}">
+                                <TextBlock Text="{Binding ManagementStatus}" TextWrapping="Wrap" />
+                            </Border>
+                            <TextBlock Grid.Row="1" Text="Privileges" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PrivilegeText}" Style="{StaticResource LabelValueValue}" />
+                            <TextBlock Grid.Row="2" Text="Last Known Good status" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BootStatusText}" Style="{StaticResource LabelValueValue}" />
+                            <TextBlock Grid.Row="3" Text="Change stamp" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ChangeStampText}" Style="{StaticResource LabelValueValue}" />
+                            <TextBlock Grid.Row="4" Text="Configurations" Style="{StaticResource LabelValueLabel}" />
+                            <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding OverridesText}" Style="{StaticResource LabelValueValue}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <Border Style="{StaticResource Card}" Visibility="{Binding Warnings.Count, Converter={StaticResource NullToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="Warnings" Style="{StaticResource SectionTitle}" />
+                    <ItemsControl ItemsSource="{Binding Warnings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,4">
+                                    <TextBlock DockPanel.Dock="Left" FontFamily="{StaticResource IconFont}" Text="&#xE7BA;" Margin="0,2,10,0" />
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Right" Style="{StaticResource Caption}">
+                            <Run Text="{Binding ChangesMade, Mode=OneWay}" /><Run Text=" change(s) made with ViVeTool Studio" />
+                        </TextBlock>
+                        <TextBlock Text="Recently modified features" Style="{StaticResource SectionTitle}" />
+                    </DockPanel>
+                    <TextBlock Text="No changes yet." Style="{StaticResource Caption}"
+                               Visibility="{Binding RecentChanges.Count, Converter={StaticResource NullToVisibility}, ConverterParameter=invert}" />
+                    <ItemsControl ItemsSource="{Binding RecentChanges}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding TimeText}" Style="{StaticResource Caption}" />
+                                    <TextBlock Grid.Column="1" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding OperationText, Mode=OneWay}" FontWeight="SemiBold" /><Run Text="  " /><Run Text="{Binding FeatureText, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock Grid.Column="2" Text="{Binding StatusText}" Style="{StaticResource Caption}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    UI-framework-independent part of ViVeTool Studio: view models (MVVM), change history,
+    rollback policy, settings and service abstractions. Kept free of WPF so it can be unit
+    tested on any OS. Platform services (dialogs, elevation, theming) are implemented in ViVe.Studio.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ViVe.Studio</RootNamespace>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ViVe.Core\ViVe.Core.csproj" />
+    <ProjectReference Include="..\ViVe.FeatureCatalog\ViVe.FeatureCatalog.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="ViVe.Studio.Tests" />
+  </ItemGroup>
+</Project>

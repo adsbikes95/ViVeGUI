@@ -59,10 +59,13 @@ namespace ViVe.Core
                 : RTL_FEATURE_CONFIGURATION_OPERATION.FeatureState | RTL_FEATURE_CONFIGURATION_OPERATION.VariantState,
         };
 
-        public override string ToString() =>
-            $"{FeatureId} @ {Priority}: {EnabledState}" +
+        /// <summary>Short description without the feature ID, e.g. "User: Enabled, variant 2".</summary>
+        public string DescribeState() =>
+            $"{Priority}: {EnabledState}" +
             (IsExperiment ? " (experiment)" : string.Empty) +
             (Variant != 0 ? $", variant {Variant}" : string.Empty) +
             (VariantPayloadKind != RTL_FEATURE_VARIANT_PAYLOAD_KIND.None || VariantPayload != 0 ? $", payload {VariantPayloadKind}:{VariantPayload}" : string.Empty);
+
+        public override string ToString() => $"{FeatureId} @ {DescribeState()}";
     }
 }
