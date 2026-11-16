@@ -12,6 +12,9 @@ public interface IFileDownloader
 {
     /// <summary>Returns the file's bytes; throws if the response is larger than <paramref name="maxBytes"/>.</summary>
     Task<byte[]> DownloadAsync(Uri uri, long maxBytes, CancellationToken cancellationToken);
+
+    /// <summary>Streams a file to <paramref name="path"/>. Returns false if the server says it does not exist (404).</summary>
+    Task<bool> DownloadToFileAsync(Uri uri, string path, long maxBytes, CancellationToken cancellationToken);
 }
 
 /// <summary>Plain HTTPS downloads with a size cap. Content is treated as text data only.</summary>
@@ -42,6 +45,29 @@ public sealed class HttpFileDownloader : IFileDownloader, IDisposable
             buffer.Write(chunk, 0, read);
         }
         return buffer.ToArray();
+    }
+
+    public async Task<bool> DownloadToFileAsync(Uri uri, string path, long maxBytes, CancellationToken cancellationToken)
+    {
+        if (uri.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("Only HTTPS downloads are allowed.");
+        using var response = await _http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return false;
+        response.EnsureSuccessStatusCode();
+        if (response.RequestMessage?.RequestUri is { } final && final.Scheme != Uri.UriSchemeHttps)
+            throw new InvalidOperationException("Download was redirected to a non-HTTPS address.");
+        if (response.Content.Headers.ContentLength > maxBytes) throw new InvalidDataException($"{uri} is larger than allowed.");
+        await using var source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using var target = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
+        var chunk = new byte[81920];
+        long total = 0;
+        int read;
+        while ((read = await source.ReadAsync(chunk, cancellationToken).ConfigureAwait(false)) > 0)
+        {
+            total += read;
+            if (total > maxBytes) throw new InvalidDataException($"{uri} is larger than allowed.");
+            await target.WriteAsync(chunk.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+        }
+        return true;
     }
 
     public void Dispose() => _http.Dispose();

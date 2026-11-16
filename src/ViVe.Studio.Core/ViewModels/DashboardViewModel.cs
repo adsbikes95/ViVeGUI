@@ -4,6 +4,7 @@ using Albacore.ViVe.NativeEnums;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ViVe.Core;
+using ViVe.FeatureCatalog;
 using ViVe.Studio.Services;
 
 namespace ViVe.Studio.ViewModels;
@@ -16,10 +17,15 @@ public sealed partial class DashboardViewModel : ObservableObject
     private readonly IElevationService _elevation;
     private readonly ISettingsService _settings;
     private readonly FeatureChangeService _changes;
+    private readonly BuildSnapshotService? _snapshots;
+    private readonly IFeatureCatalog? _catalog;
 
     public DashboardViewModel(IFeatureManager manager, IChangeHistoryStore history, ISystemInfoProvider systemInfo,
-        IElevationService elevation, ISettingsService settings, FeatureChangeService changes)
+        IElevationService elevation, ISettingsService settings, FeatureChangeService changes,
+        BuildSnapshotService? snapshots = null, IFeatureCatalog? catalog = null)
     {
+        _snapshots = snapshots;
+        _catalog = catalog;
         _manager = manager;
         _history = history;
         _systemInfo = systemInfo;
@@ -30,6 +36,9 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public ObservableCollection<HistoryItemViewModel> RecentChanges { get; } = new();
     public ObservableCollection<string> Warnings { get; } = new();
+    /// <summary>Feature IDs configured now that were not configured on the previous build ("ID · name").</summary>
+    public ObservableCollection<string> NewSinceUpdate { get; } = new();
+    [ObservableProperty] private string _buildChangesText = "-";
 
     [ObservableProperty] private string _productName = "Windows";
     [ObservableProperty] private string _versionText = "-";
@@ -81,6 +90,8 @@ public sealed partial class DashboardViewModel : ObservableObject
                 ? $"{total:N0} runtime configurations, {status.RuntimeUserOverrideCount:N0} at User priority"
                 : "unavailable";
 
+            await UpdateBuildChangesAsync(info);
+
             var entries = await _history.GetEntriesAsync();
             ChangesMade = entries.Count(e => e.ChangedState);
             RecentChanges.Clear();
@@ -104,5 +115,35 @@ public sealed partial class DashboardViewModel : ObservableObject
                 Warnings.Add(_settings.LoadWarning);
         }
         finally { IsLoading = false; }
+    }
+
+    private async Task UpdateBuildChangesAsync(SystemInfo info)
+    {
+        NewSinceUpdate.Clear();
+        if (_snapshots == null) { BuildChangesText = "-"; return; }
+        var ids = await _manager.GetConfiguredFeatureIdsAsync();
+        if (ids == null) { BuildChangesText = "The runtime feature store could not be read."; return; }
+        FeatureStoreSnapshot snapshot;
+        try { snapshot = await _snapshots.RecordAsync(info.BuildDisplay, info.Build, ids); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            BuildChangesText = "The feature snapshot could not be saved: " + ex.Message;
+            return;
+        }
+        var diff = _snapshots.CompareWithPreviousBuild(snapshot);
+        if (diff == null)
+        {
+            BuildChangesText = $"Baseline recorded for build {snapshot.BuildText} ({snapshot.ConfiguredIds.Count:N0} configured feature IDs, " +
+                               $"{snapshot.CapturedAtUtc.ToLocalTime():g}). After the next Windows update, IDs that are new in that build are listed here.";
+            return;
+        }
+        BuildChangesText = $"Since build {diff.Previous.BuildText} (recorded {diff.Previous.CapturedAtUtc.ToLocalTime():d}): " +
+                           $"{diff.Added.Count:N0} feature IDs are newly configured and {diff.Removed.Count:N0} are no longer configured. " +
+                           "Compared at the first launch on each build; your own changes count too.";
+        foreach (var id in diff.Added.Take(200))
+        {
+            var name = _catalog?.TryGet(id)?.Name;
+            NewSinceUpdate.Add(name == null ? id.ToString(System.Globalization.CultureInfo.InvariantCulture) : $"{id}  ·  {name}");
+        }
     }
 }

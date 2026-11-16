@@ -18,11 +18,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IFeatureCatalog _catalog;
     private readonly IFeatureManager? _manager;
     private readonly Mach2ImportService? _mach2;
+    private readonly SymbolScanService? _scanner;
+    private readonly ISystemInfoProvider? _systemInfo;
+    private CancellationTokenSource? _scanCancellation;
     private bool _loading;
 
     public SettingsViewModel(ISettingsService settings, IThemeService theme, IDialogService dialogs, IFeatureCatalog catalog, IAppPaths paths,
-        IFeatureManager? manager = null, Mach2ImportService? mach2 = null)
+        IFeatureManager? manager = null, Mach2ImportService? mach2 = null, SymbolScanService? scanner = null, ISystemInfoProvider? systemInfo = null)
     {
+        _scanner = scanner;
+        _systemInfo = systemInfo;
         _settings = settings;
         _theme = theme;
         _dialogs = dialogs;
@@ -45,8 +50,18 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string? _crossCheckUnnamedText;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(ImportMach2Command), nameof(ImportMach2FolderCommand), nameof(RemoveMach2Command), nameof(CrossCheckCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ImportMach2Command), nameof(ImportMach2FolderCommand), nameof(RemoveMach2Command), nameof(CrossCheckCommand),
+        nameof(ScanBuildCommand), nameof(CancelScanCommand), nameof(RemoveScansCommand))]
     private bool _isImporting;
+
+    [ObservableProperty] private string _scanStatusText = string.Empty;
+    [ObservableProperty] private string? _scanProgressText;
+    public bool IsScanAvailable => _scanner != null && _systemInfo != null;
+    public string ScanAboutText =>
+        "Reads the feature names and IDs built into this PC's Windows binaries, so names match this exact build. For each 64-bit system binary that uses " +
+        "feature staging, ViVeTool Studio downloads its public debug symbols from Microsoft's symbol server (msdl.microsoft.com), checks they belong to " +
+        "that binary, and reads the feature symbols as data. Nothing downloaded is executed. The first scan downloads a few GB and can take a while; " +
+        "results are cached, so scans after a Windows update only fetch symbols for binaries that changed. Method after mach2 by Rafael Rivera (GPL-3.0).";
 
     public bool IsMach2Available => _mach2 != null;
     public string Mach2AboutText =>
@@ -142,6 +157,72 @@ public sealed partial class SettingsViewModel : ObservableObject
         SetStatus("mach2 import removed.", StatusSeverity.Info);
     }
 
+    private bool CanScan() => !IsImporting && IsScanAvailable;
+    private bool CanCancelScan() => IsImporting && _scanCancellation != null;
+
+    [RelayCommand(CanExecute = nameof(CanScan))]
+    private async Task ScanBuildAsync()
+    {
+        var info = _systemInfo!.GetSystemInfo();
+        if (!info.IsWindows)
+        {
+            SetStatus("Scanning needs Windows.", StatusSeverity.Error);
+            return;
+        }
+        if (!_dialogs.Confirm("Scan this build",
+                $"ViVeTool Studio will look through the Windows folders for 64-bit binaries that use feature staging and download their public debug symbols " +
+                $"from msdl.microsoft.com (HTTPS). The first scan of build {info.BuildDisplay} typically downloads a few GB and can take 10 to 30 minutes. " +
+                "You can cancel at any time; finished files are cached.\n\nNo feature settings are changed. Continue?", highRisk: false))
+        {
+            SetStatus("Scan cancelled.", StatusSeverity.Info);
+            return;
+        }
+        _scanCancellation = new CancellationTokenSource();
+        IsImporting = true;
+        CancelScanCommand.NotifyCanExecuteChanged();
+        try
+        {
+            var progress = new Progress<SymbolScanProgress>(p => ScanProgressText =
+                $"{p.Phase}: {p.Completed:N0} of {p.Total:N0}" + (p.BytesDownloaded > 0 ? $", {p.BytesDownloaded / (1024.0 * 1024.0):N0} MB downloaded" : string.Empty) +
+                (p.Current is null ? string.Empty : $" ({p.Current})"));
+            SymbolScanOutcome outcome;
+            try { outcome = await _scanner!.ScanAsync(info.BuildDisplay, info.Build, SymbolScanService.DefaultRoots(), progress, _scanCancellation.Token); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException)
+            {
+                SetStatus("Scan failed: " + ex.Message, StatusSeverity.Error);
+                return;
+            }
+            ScanProgressText = outcome.Problems.Count == 0 ? null : string.Join(Environment.NewLine, outcome.Problems.Take(10));
+            if (outcome.NewNamesSincePreviousScan.Count > 0)
+                ScanProgressText = "New names: " + string.Join(", ", outcome.NewNamesSincePreviousScan.Take(100)) +
+                                   (ScanProgressText is null ? string.Empty : Environment.NewLine + ScanProgressText);
+            if (outcome.Success) ReloadCatalog();
+            SetStatus(outcome.Message, outcome.Cancelled ? StatusSeverity.Info : !outcome.Success ? StatusSeverity.Error :
+                outcome.Problems.Count > 0 ? StatusSeverity.Warning : StatusSeverity.Success);
+        }
+        finally
+        {
+            _scanCancellation?.Dispose();
+            _scanCancellation = null;
+            IsImporting = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCancelScan))]
+    private void CancelScan() => _scanCancellation?.Cancel();
+
+    [RelayCommand(CanExecute = nameof(CanScan))]
+    private void RemoveScans()
+    {
+        if (!_scanner!.RemoveScans())
+        {
+            SetStatus("There are no scan results to remove.", StatusSeverity.Info);
+            return;
+        }
+        ReloadCatalog();
+        SetStatus("Scan results and cached symbol data removed.", StatusSeverity.Info);
+    }
+
     private bool CanCrossCheck() => !IsImporting && _manager != null;
 
     [RelayCommand(CanExecute = nameof(CanCrossCheck))]
@@ -192,11 +273,18 @@ public sealed partial class SettingsViewModel : ObservableObject
         var verified = all.Count(e => e.VerificationStatus == VerificationStatus.Verified);
         var reported = all.Count(e => e.VerificationStatus == VerificationStatus.CommunityReported);
         CatalogSummary = $"{_catalog.Count:N0} feature IDs known, {all.Count(e => e.Name != null):N0} with a name. " +
-                         $"Names come from the upstream ViVe dictionary (name only) and, if imported, from mach2. " +
+                         $"Names come from the upstream ViVe dictionary (name only) and, if used, from the mach2 import and scans of this PC's build. " +
                          $"Entries with verified build data: {verified:N0}. Community-reported entries: {reported:N0}. " +
                          "No entry has a description or category unless a cited source provides one.";
         CatalogMessages.Clear();
         foreach (var message in _catalog.LoadMessages.Take(20)) CatalogMessages.Add(message);
+        if (_scanner != null)
+        {
+            var scans = _scanner.LoadScans();
+            ScanStatusText = scans.Count == 0 ? "Not scanned yet." :
+                "Scanned builds: " + string.Join("; ", scans.Select(s =>
+                    $"{s.BuildText} ({s.Binaries.SelectMany(b => b.Features).Select(f => f.Id).Distinct().Count():N0} named IDs, {s.ScannedAtUtc.ToLocalTime():g})")) + ".";
+        }
         if (_mach2 == null) { Mach2StatusText = string.Empty; return; }
         var status = _mach2.GetStatus();
         Mach2StatusText = status.IsImported

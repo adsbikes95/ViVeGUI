@@ -22,6 +22,15 @@ public sealed class FakeDownloader : IFileDownloader
         if (data.Length > maxBytes) throw new InvalidDataException("too large (test)");
         return Task.FromResult(data);
     }
+
+    public async Task<bool> DownloadToFileAsync(Uri uri, string path, long maxBytes, CancellationToken cancellationToken)
+    {
+        lock (Requests) Requests.Add(uri);
+        if (!Files.TryGetValue(uri.AbsoluteUri, out var data)) return false;
+        if (data.Length > maxBytes) throw new InvalidDataException("too large (test)");
+        await File.WriteAllBytesAsync(path, data, cancellationToken);
+        return true;
+    }
 }
 
 public class Mach2ImportTests

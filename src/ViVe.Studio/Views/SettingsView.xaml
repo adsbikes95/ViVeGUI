@@ -60,6 +60,21 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
+                    <TextBlock Text="Scan this build for feature names" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{Binding ScanAboutText, Mode=OneWay}" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding ScanStatusText}" TextWrapping="Wrap" Margin="0,8,0,0" />
+                    <WrapPanel Margin="0,8,0,0">
+                        <Button Content="Scan _this build..." Command="{Binding ScanBuildCommand}" Margin="0,0,8,0" MinWidth="96" />
+                        <Button Content="Ca_ncel scan" Command="{Binding CancelScanCommand}" Margin="0,0,8,0" MinWidth="96" />
+                        <Button Content="Remove scan results" Command="{Binding RemoveScansCommand}" Margin="0,0,8,0" MinWidth="96" />
+                    </WrapPanel>
+                    <TextBox Text="{Binding ScanProgressText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent"
+                             MaxHeight="160" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Scan progress and results" Margin="0,6,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
                     <TextBlock Text="Feature names from mach2" Style="{StaticResource SectionTitle}" />
                     <TextBlock Text="{Binding Mach2AboutText, Mode=OneWay}" TextWrapping="Wrap" />
                     <TextBlock Text="{Binding Mach2StatusText}" TextWrapping="Wrap" Margin="0,8,0,0" />
