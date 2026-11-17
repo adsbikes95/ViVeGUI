@@ -16,6 +16,15 @@ public static partial class FeatureCatalogLoader
     [GeneratedRegex("^[A-Za-z0-9_.\\-]{1,256}$")]
     private static partial Regex NamePattern();
 
+    /// <summary>True when <paramref name="name"/> is an acceptable internal feature name (letters, digits, '_', '.', '-').</summary>
+    public static bool IsValidName(string? name) => name != null && NamePattern().IsMatch(name);
+
+    [GeneratedRegex(@"^[A-Za-z0-9_.\-]{1,128}\.(dll|exe|sys|cpl|mui|ocx|winmd)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ModulePattern();
+
+    /// <summary>A plain binary file name such as "Taskbar.dll" (no path).</summary>
+    public static bool IsValidModuleName(string? name) => name != null && ModulePattern().IsMatch(name);
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -68,6 +77,7 @@ public static partial class FeatureCatalogLoader
             if (entry.Id == 0) { errors.Add("Entry with feature ID 0 skipped."); continue; }
             if (!seen.Add(entry.Id)) { errors.Add($"Duplicate entry for feature {entry.Id} skipped."); continue; }
             if (entry.Name != null && !NamePattern().IsMatch(entry.Name)) { errors.Add($"Feature {entry.Id} has an invalid name; entry skipped."); continue; }
+            if ((entry.Aliases ?? Array.Empty<string>()).Any(a => a == null || !NamePattern().IsMatch(a))) { errors.Add($"Feature {entry.Id} has an invalid alias; entry skipped."); continue; }
             if (entry.VerificationStatus is VerificationStatus.CommunityReported or VerificationStatus.Verified && string.IsNullOrWhiteSpace(entry.Source))
             {
                 errors.Add($"Feature {entry.Id} is marked {entry.VerificationStatus} but has no source; entry skipped.");
@@ -79,7 +89,13 @@ public static partial class FeatureCatalogLoader
                 if (b.MinBuild is not null && b.MaxBuild is not null && b.MinBuild > b.MaxBuild)
                     warnings.Add($"Feature {entry.Id} has a build range with minBuild > maxBuild.");
             if (entries.Count >= MaxEntries) { errors.Add($"Catalog exceeds {MaxEntries} entries; remaining entries ignored."); break; }
-            entries.Add(entry);
+            var clean = entry with { Aliases = entry.Aliases ?? Array.Empty<string>(), Modules = (entry.Modules ?? Array.Empty<string>()).Where(m => m != null && ModulePattern().IsMatch(m)).Take(32).ToArray() };
+            if (!string.IsNullOrWhiteSpace(clean.Category) && (string.IsNullOrWhiteSpace(clean.Source) || clean.VerificationStatus < VerificationStatus.CommunityReported))
+            {
+                warnings.Add($"Feature {entry.Id} has a category without a cited source; the category was ignored.");
+                clean = clean with { Category = null };
+            }
+            entries.Add(clean);
         }
         return new CatalogLoadResult(entries, errors, warnings);
     }

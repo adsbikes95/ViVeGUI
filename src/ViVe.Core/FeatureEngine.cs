@@ -143,6 +143,19 @@ namespace ViVe.Core
         public Task<FeatureSystemStatus> GetSystemStatusAsync(CancellationToken cancellationToken = default) =>
             RunGatedAsync(GetSystemStatusCore, cancellationToken);
 
+        public Task<IReadOnlyList<uint>?> GetConfiguredFeatureIdsAsync(CancellationToken cancellationToken = default) =>
+            RunGatedAsync(GetConfiguredFeatureIdsCore, cancellationToken);
+
+        private IReadOnlyList<uint>? GetConfiguredFeatureIdsCore()
+        {
+            if (!_api.IsPlatformSupported) return null;
+            try
+            {
+                return _api.QueryAll(FeatureStore.Runtime)?.Select(c => c.FeatureId).Distinct().OrderBy(id => id).ToArray();
+            }
+            catch (Exception ex) when (IsNativeFailure(ex)) { return null; }
+        }
+
         private FeatureQueryResult QueryCore(uint featureId)
         {
             var now = _clock();

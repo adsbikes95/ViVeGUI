@@ -36,8 +36,13 @@ public sealed record FeatureCatalogEntry
 {
     [JsonPropertyName("id")] public uint Id { get; init; }
     [JsonPropertyName("name")] public string? Name { get; init; }
+    /// <summary>Other internal names a source has used for the same ID (for example after a rename). Searchable; never a description.</summary>
+    [JsonPropertyName("aliases")] public IReadOnlyList<string> Aliases { get; init; } = Array.Empty<string>();
     [JsonPropertyName("description")] public string? Description { get; init; }
+    /// <summary>A curated category. Only honoured when <see cref="Source"/> cites it; the loader drops an uncited category.</summary>
     [JsonPropertyName("category")] public string? Category { get; init; }
+    /// <summary>Binaries the ID was found in (for example by a local symbol scan). Used only to group features for browsing.</summary>
+    [JsonPropertyName("modules")] public IReadOnlyList<string> Modules { get; init; } = Array.Empty<string>();
     [JsonPropertyName("builds")] public IReadOnlyList<BuildCompatibility> Builds { get; init; } = Array.Empty<BuildCompatibility>();
     /// <summary>Where the ID/metadata came from (citation or URL). Required for anything above NameOnly.</summary>
     [JsonPropertyName("source")] public string? Source { get; init; }

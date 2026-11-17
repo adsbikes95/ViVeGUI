@@ -83,7 +83,7 @@
                     <Button Content="_Add selected to feature IDs" Command="{Binding AddToInputCommand}" CommandParameter="{Binding SelectedItem, ElementName=SearchList}"
                             HorizontalAlignment="Left" Margin="0,8,0,0" />
                     <TextBlock Style="{StaticResource Caption}" Margin="0,8,0,0"
-                               Text="Names come from the ViVe feature dictionary. A name does not describe what a feature does, and its presence does not mean it is safe to change." />
+                               Text="Names come from the ViVe feature dictionary and, if imported in Settings, from mach2 (verified for the builds it lists). A name does not describe what a feature does, and its presence does not mean it is safe to change." />
                 </StackPanel>
             </Border>
 

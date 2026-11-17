@@ -35,6 +35,12 @@ namespace ViVe.Core
             IProgress<FeatureOperationResult>? progress = null,
             CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Distinct feature IDs that have any configuration in the runtime store (what "ViVeTool /query" lists),
+        /// or null if the store could not be read.
+        /// </summary>
+        Task<IReadOnlyList<uint>?> GetConfiguredFeatureIdsAsync(CancellationToken cancellationToken = default);
+
         Task<FeatureSystemStatus> GetSystemStatusAsync(CancellationToken cancellationToken = default);
     }
 }

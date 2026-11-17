@@ -43,7 +43,18 @@ public partial class App : Application
         services.AddSingleton<ISettingsService>(_ => new JsonSettingsService(paths.SettingsFile));
         services.AddSingleton<IAppLogger>(sp => new FileLogger(paths, () => sp.GetRequiredService<ISettingsService>().Current.EnableFileLogging));
         services.AddSingleton<IChangeHistoryStore>(_ => new JsonChangeHistoryStore(paths.HistoryFile));
-        services.AddSingleton<IFeatureCatalog>(sp => FeatureCatalog.FeatureCatalog.LoadFromDirectory(paths.CatalogDirectory, sp.GetRequiredService<ISettingsService>().Current.UserCatalogPath));
+        services.AddSingleton<IFeatureCatalog>(sp => new ReloadableFeatureCatalog(() => FeatureCatalog.FeatureCatalog.LoadFromDirectory(
+            paths.CatalogDirectory,
+            sp.GetRequiredService<ISettingsService>().Current.UserCatalogPath,
+            new[]
+            {
+                System.IO.Path.Combine(paths.ImportedCatalogDirectory, Mach2ImportService.ImportFileName),
+                System.IO.Path.Combine(paths.ImportedCatalogDirectory, SymbolScanService.CatalogFileName),
+            })));
+        services.AddSingleton<IFileDownloader, HttpFileDownloader>();
+        services.AddSingleton(sp => new Mach2ImportService(paths, sp.GetRequiredService<IFileDownloader>()));
+        services.AddSingleton(sp => new SymbolScanService(paths, sp.GetRequiredService<IFileDownloader>()));
+        services.AddSingleton(_ => new BuildSnapshotService(paths));
 
         // Engine: the real ViVe library. All GUI modifications go through FeatureEngine.
         services.AddSingleton<IFeatureConfigurationApi, NativeFeatureConfigurationApi>();
@@ -57,9 +68,13 @@ public partial class App : Application
 
         services.AddSingleton<DashboardViewModel>();
         services.AddSingleton<FeaturesViewModel>();
+        services.AddSingleton(sp => new CollectionsViewModel(sp.GetRequiredService<IFeatureCatalog>(), sp.GetRequiredService<FeaturesViewModel>(),
+            sp.GetRequiredService<IFeatureManager>()));
         services.AddSingleton<HistoryViewModel>();
         services.AddSingleton<SettingsViewModel>();
-        services.AddSingleton<MainViewModel>();
+        services.AddSingleton(sp => new MainViewModel(sp.GetRequiredService<DashboardViewModel>(), sp.GetRequiredService<FeaturesViewModel>(),
+            sp.GetRequiredService<HistoryViewModel>(), sp.GetRequiredService<SettingsViewModel>(), sp.GetRequiredService<IElevationService>(),
+            sp.GetRequiredService<IChangeHistoryStore>(), sp.GetRequiredService<CollectionsViewModel>()));
         return services.BuildServiceProvider();
     }
 

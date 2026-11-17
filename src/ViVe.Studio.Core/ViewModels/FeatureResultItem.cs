@@ -53,11 +53,19 @@ public sealed record FeatureResultItem(
         if (meta == null) return "Catalog: unknown feature ID (no metadata). Compatibility unknown.";
         var compat = meta.IsCompatibleWith(build) switch
         {
-            true => $"listed as present on build {build} by its source",
-            false => $"not listed for build {build} by its source",
+            true => $"build {build} is within a build range its source lists",
+            false => $"not listed for build {build} by its source" + LatestRange(meta),
             null => "compatibility unknown",
         };
+        var aliases = meta.Aliases.Count == 0 ? string.Empty : $" Also known as: {string.Join(", ", meta.Aliases)}.";
         var source = meta.Source is null ? string.Empty : $" Source: {meta.Source}.";
-        return $"Catalog: {meta.VerificationStatus}; {compat}.{source}";
+        return $"Catalog: {meta.VerificationStatus}; {compat}.{aliases}{source}";
+    }
+
+    private static string LatestRange(FeatureCatalogEntry meta)
+    {
+        var latest = meta.Builds.Where(b => b.MaxBuild != null).OrderByDescending(b => b.MaxBuild).FirstOrDefault();
+        if (latest == null) return string.Empty;
+        return latest.MinBuild == latest.MaxBuild ? $" (most recently listed for build {latest.MaxBuild})" : $" (most recently listed for builds {latest.MinBuild} to {latest.MaxBuild})";
     }
 }

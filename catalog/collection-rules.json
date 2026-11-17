@@ -1,0 +1,261 @@
+{
+  "description": "Rules that group feature names into collections for browsing. Assignments are INFERRED from a feature's internal name (word match) or, failing that, from the binary it was found in. They are a browsing aid only: they say nothing about what a feature does, whether it is visible, or whether it is safe to change. Collections are checked in order; the first name rule that matches wins, then the first binary rule. A curated catalog entry with a cited category always overrides these rules. Words match whole words of the name split at capital letters, digits and underscores (\"TaskbarAutoHide\" = taskbar auto hide), so \"start menu\" does not match \"Restart\".",
+  "collections": [
+    {
+      "name": "Fixes and servicing",
+      "description": "Bug fixes, security servicing and release switches. Usually not something to turn on by hand.",
+      "words": [
+        "fix",
+        "fixes",
+        "fixed",
+        "bugfix",
+        "bug",
+        "bugs",
+        "servicing",
+        "msrc",
+        "leak",
+        "crash",
+        "crashes",
+        "hang",
+        "race",
+        "regression",
+        "mitigation",
+        "hotfix",
+        "standalone",
+        "cve",
+        "workaround"
+      ]
+    },
+    {
+      "name": "Telemetry and testing",
+      "description": "Logging, diagnostics, test gates and flighting plumbing.",
+      "words": [
+        "telemetry",
+        "logging",
+        "instrumentation",
+        "test",
+        "tests",
+        "testing",
+        "flighting",
+        "beacon",
+        "census",
+        "diagnostic",
+        "diagnostics",
+        "tracing",
+        "etw"
+      ]
+    },
+    {
+      "name": "Context menus",
+      "description": "Right-click menus in the shell.",
+      "words": [
+        "context menu",
+        "contextmenu",
+        "right click",
+        "ctx menu"
+      ]
+    },
+    {
+      "name": "Start menu",
+      "description": "Start, its pins, recommendations and app list.",
+      "words": [
+        "start menu",
+        "startmenu",
+        "start tile",
+        "start pins",
+        "start experience",
+        "all apps",
+        "jumplist",
+        "jump list"
+      ],
+      "modules": [
+        "StartTileData.dll",
+        "StartMenuExperienceHost.exe",
+        "StartMenu.dll"
+      ]
+    },
+    {
+      "name": "Taskbar",
+      "description": "Taskbar, system tray and notification area.",
+      "words": [
+        "taskbar",
+        "systray",
+        "tray",
+        "system tray",
+        "notification area"
+      ],
+      "modules": [
+        "Taskbar.dll",
+        "Taskbar.View.dll"
+      ]
+    },
+    {
+      "name": "File Explorer",
+      "description": "File Explorer windows, panes, folders and file operations.",
+      "words": [
+        "file explorer",
+        "explorer",
+        "folder",
+        "folders",
+        "nav pane",
+        "navpane",
+        "navigation pane",
+        "details pane",
+        "preview pane",
+        "address bar",
+        "breadcrumb",
+        "gallery"
+      ],
+      "modules": [
+        "ExplorerFrame.dll",
+        "windows.storage.dll",
+        "FileExplorerExtensions.dll"
+      ]
+    },
+    {
+      "name": "Notifications and quick settings",
+      "description": "Notifications, toasts, Quick Settings and Focus.",
+      "words": [
+        "notification",
+        "notifications",
+        "toast",
+        "toasts",
+        "action center",
+        "quick settings",
+        "quick actions",
+        "quickactions",
+        "focus assist",
+        "do not disturb"
+      ]
+    },
+    {
+      "name": "Settings",
+      "description": "The Settings app and its pages.",
+      "words": [
+        "settings",
+        "setting",
+        "system settings"
+      ],
+      "modules": [
+        "SettingsHandlers_*",
+        "SystemSettings*",
+        "SettingsEnvironment.*",
+        "SettingsContent.dll"
+      ]
+    },
+    {
+      "name": "Window management",
+      "description": "Snap, Alt+Tab, Task View, virtual desktops and title bars.",
+      "words": [
+        "snap",
+        "alttab",
+        "alt tab",
+        "task view",
+        "taskview",
+        "virtual desktop",
+        "virtual desktops",
+        "multitasking",
+        "tiling",
+        "title bar",
+        "titlebar",
+        "window arrangement",
+        "window management"
+      ],
+      "modules": [
+        "uDWM.dll"
+      ]
+    },
+    {
+      "name": "Search",
+      "description": "Windows Search, the search box and indexing.",
+      "words": [
+        "search",
+        "indexer",
+        "indexing"
+      ],
+      "modules": [
+        "mssrch.dll",
+        "tquery.dll",
+        "SearchUx.*",
+        "SearchHost.exe",
+        "SearchIndexer.exe"
+      ]
+    },
+    {
+      "name": "Lock screen and sign-in",
+      "description": "Lock screen, sign-in and logon.",
+      "words": [
+        "lock screen",
+        "lockscreen",
+        "logon",
+        "login",
+        "signin",
+        "sign in"
+      ],
+      "modules": [
+        "Windows.UI.Logon.dll",
+        "winlogon.exe",
+        "LogonController.dll",
+        "authui.dll"
+      ]
+    },
+    {
+      "name": "Input and accessibility",
+      "description": "Keyboard, pen, touch, voice, captions and accessibility tools.",
+      "words": [
+        "narrator",
+        "magnifier",
+        "accessibility",
+        "keyboard",
+        "touch keyboard",
+        "pen",
+        "ink",
+        "inking",
+        "ime",
+        "dictation",
+        "voice access",
+        "captions",
+        "live captions",
+        "emoji",
+        "handwriting"
+      ],
+      "modules": [
+        "InputService.dll",
+        "TextInput*",
+        "Narrator.exe",
+        "LiveCaptions*"
+      ]
+    },
+    {
+      "name": "Desktop and widgets",
+      "description": "Desktop, wallpaper, Spotlight, widgets and themes.",
+      "words": [
+        "desktop icons",
+        "wallpaper",
+        "spotlight",
+        "widgets",
+        "widget",
+        "themes",
+        "theme",
+        "accent color",
+        "dark mode"
+      ]
+    },
+    {
+      "name": "Shell (other)",
+      "description": "Other features found in core shell binaries, with nothing more specific in the name.",
+      "modules": [
+        "explorer.exe",
+        "twinui*.dll",
+        "shell32.dll",
+        "ShellAppRuntime.exe",
+        "Windows.UI.Shell.dll",
+        "ShellExperienceHost.exe"
+      ]
+    }
+  ],
+  "fallback": {
+    "name": "Other",
+    "description": "No rule matched the name or binary."
+  }
+}

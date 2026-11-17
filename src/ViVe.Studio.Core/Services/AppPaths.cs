@@ -15,4 +15,5 @@ public sealed class AppPaths : IAppPaths
     public string SettingsFile => Path.Combine(DataDirectory, "settings.json");
     public string LogDirectory => Path.Combine(DataDirectory, "logs");
     public string CatalogDirectory { get; }
+    public string ImportedCatalogDirectory => Path.Combine(DataDirectory, "catalog");
 }

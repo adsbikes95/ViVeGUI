@@ -68,6 +68,16 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
+                    <TextBlock Text="New since the last Windows update" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="{Binding BuildChangesText}" TextWrapping="Wrap" />
+                    <ListBox ItemsSource="{Binding NewSinceUpdate}" MaxHeight="200" Margin="0,8,0,0" FontFamily="Cascadia Mono, Consolas"
+                             AutomationProperties.Name="Feature IDs new since the last update"
+                             Visibility="{Binding NewSinceUpdate.Count, Converter={StaticResource NullToVisibility}}" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Right" Style="{StaticResource Caption}">
                             <Run Text="{Binding ChangesMade, Mode=OneWay}" /><Run Text=" change(s) made with ViVeTool Studio" />

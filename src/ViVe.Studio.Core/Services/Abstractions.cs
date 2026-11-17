@@ -40,6 +40,8 @@ public interface IDialogService
     string? PickSaveFile(string title, string filter, string defaultFileName);
 
     string? PickOpenFile(string title, string filter);
+
+    string? PickFolder(string title);
 }
 
 public interface IThemeService
@@ -55,6 +57,8 @@ public interface IAppPaths
     string LogDirectory { get; }
     /// <summary>Directory holding the bundled catalog files (next to the executable).</summary>
     string CatalogDirectory { get; }
+    /// <summary>Directory for catalogs generated on this PC (for example the mach2 import).</summary>
+    string ImportedCatalogDirectory { get; }
 }
 
 public enum LogLevel { Debug, Information, Warning, Error }

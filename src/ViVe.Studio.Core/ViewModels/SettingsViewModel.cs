@@ -2,7 +2,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ViVe.Core;
 using ViVe.FeatureCatalog;
+using ViVe.FeatureCatalog.Mach2;
 using ViVe.Studio.Services;
 
 namespace ViVe.Studio.ViewModels;
@@ -13,16 +15,27 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IThemeService _theme;
     private readonly IDialogService _dialogs;
     private readonly IAppPaths _paths;
+    private readonly IFeatureCatalog _catalog;
+    private readonly IFeatureManager? _manager;
+    private readonly Mach2ImportService? _mach2;
+    private readonly SymbolScanService? _scanner;
+    private readonly ISystemInfoProvider? _systemInfo;
+    private CancellationTokenSource? _scanCancellation;
     private bool _loading;
 
-    public SettingsViewModel(ISettingsService settings, IThemeService theme, IDialogService dialogs, IFeatureCatalog catalog, IAppPaths paths)
+    public SettingsViewModel(ISettingsService settings, IThemeService theme, IDialogService dialogs, IFeatureCatalog catalog, IAppPaths paths,
+        IFeatureManager? manager = null, Mach2ImportService? mach2 = null, SymbolScanService? scanner = null, ISystemInfoProvider? systemInfo = null)
     {
+        _scanner = scanner;
+        _systemInfo = systemInfo;
         _settings = settings;
         _theme = theme;
         _dialogs = dialogs;
         _paths = paths;
-        CatalogSummary = $"{catalog.Count:N0} feature IDs known. Names come from the upstream ViVe dictionary (name only: no descriptions, categories or compatibility data). Curated, source-attributed entries: {catalog.Search(string.Empty, int.MaxValue).Count(e => e.VerificationStatus >= VerificationStatus.CommunityReported):N0}.";
-        foreach (var message in catalog.LoadMessages.Take(20)) CatalogMessages.Add(message);
+        _catalog = catalog;
+        _manager = manager;
+        _mach2 = mach2;
+        RefreshCatalogInfo();
         LoadFrom(settings.Current);
         settings.Changed += (_, _) => LoadFrom(settings.Current);
     }
@@ -30,7 +43,32 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<ThemePreference> Themes { get; } = Enum.GetValues<ThemePreference>();
     public IReadOnlyList<StoreOption> StoreOptions => StoreOption.All;
     public ObservableCollection<string> CatalogMessages { get; } = new();
-    public string CatalogSummary { get; }
+    [ObservableProperty] private string _catalogSummary = string.Empty;
+    [ObservableProperty] private string _mach2StatusText = string.Empty;
+    [ObservableProperty] private string? _mach2ProgressText;
+    [ObservableProperty] private string? _crossCheckText;
+    [ObservableProperty] private string? _crossCheckUnnamedText;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ImportMach2Command), nameof(ImportMach2FolderCommand), nameof(RemoveMach2Command), nameof(CrossCheckCommand),
+        nameof(ScanBuildCommand), nameof(CancelScanCommand), nameof(RemoveScansCommand))]
+    private bool _isImporting;
+
+    [ObservableProperty] private string _scanStatusText = string.Empty;
+    [ObservableProperty] private string? _scanProgressText;
+    public bool IsScanAvailable => _scanner != null && _systemInfo != null;
+    public string ScanAboutText =>
+        "Reads the feature names and IDs built into this PC's Windows binaries, so names match this exact build. For each 64-bit system binary that uses " +
+        "feature staging, ViVeTool Studio downloads its public debug symbols from Microsoft's symbol server (msdl.microsoft.com), checks they belong to " +
+        "that binary, and reads the feature symbols as data. Nothing downloaded is executed. The first scan downloads a few GB and can take a while; " +
+        "results are cached, so scans after a Windows update only fetch symbols for binaries that changed. Method after mach2 by Rafael Rivera (GPL-3.0).";
+
+    public bool IsMach2Available => _mach2 != null;
+    public string Mach2AboutText =>
+        $"mach2 by {Mach2Source.Author} ({Mach2Source.RepositoryUrl}, {Mach2Source.License}) published feature names and IDs read from Windows debug symbols, " +
+        $"for {Mach2Manifest.Embedded.Entries.Count} builds. It stopped publishing on {Mach2Source.PinnedCommitDate}; the newest listed build is " +
+        $"{Mach2Manifest.Embedded.Entries.Max(e => e.Info.Build)}. Imported entries record the builds each ID was listed for and mach2's staging section. " +
+        "They carry no descriptions or categories, and being listed does not mean a feature is safe to change.";
     public string CatalogUpdateText => "Remote catalog updates are not available in this version. The local catalog ships with the application; you can add a local JSON catalog file below.";
     public string DataDirectory => _paths.DataDirectory;
     public string AboutText =>
@@ -79,6 +117,179 @@ public sealed partial class SettingsViewModel : ObservableObject
         UserCatalogPath = null;
         await SaveAsync();
         SetStatus("Local catalog file removed. Restart ViVeTool Studio to apply.", StatusSeverity.Info);
+    }
+
+    private bool CanImport() => !IsImporting && _mach2 != null;
+
+    [RelayCommand(CanExecute = nameof(CanImport))]
+    private async Task ImportMach2Async()
+    {
+        var manifest = _mach2!.Manifest;
+        var mb = manifest.TotalBytes / (1024.0 * 1024.0);
+        if (!_dialogs.Confirm("Import feature names from mach2",
+                $"ViVeTool Studio will download {manifest.Entries.Count} feature lists ({mb:N0} MB) from raw.githubusercontent.com " +
+                $"(riverar/mach2 at commit {Mach2Source.ShortCommit}). Each file is checked against a pinned SHA-256 hash and read as text only.\n\n" +
+                "No feature settings are changed. Continue?", highRisk: false))
+        {
+            SetStatus("Import cancelled.", StatusSeverity.Info);
+            return;
+        }
+        await RunImportAsync(p => _mach2.ImportFromGitHubAsync(p));
+    }
+
+    [RelayCommand(CanExecute = nameof(CanImport))]
+    private async Task ImportMach2FolderAsync()
+    {
+        var folder = _dialogs.PickFolder("Select the root folder of a mach2 clone (it contains a \"features\" folder)");
+        if (folder == null) return;
+        await RunImportAsync(p => _mach2!.ImportFromFolderAsync(folder, p));
+    }
+
+    [RelayCommand(CanExecute = nameof(CanImport))]
+    private void RemoveMach2()
+    {
+        if (!_mach2!.RemoveImport())
+        {
+            SetStatus("There is no mach2 import to remove.", StatusSeverity.Info);
+            return;
+        }
+        ReloadCatalog();
+        SetStatus("mach2 import removed.", StatusSeverity.Info);
+    }
+
+    private bool CanScan() => !IsImporting && IsScanAvailable;
+    private bool CanCancelScan() => IsImporting && _scanCancellation != null;
+
+    [RelayCommand(CanExecute = nameof(CanScan))]
+    private async Task ScanBuildAsync()
+    {
+        var info = _systemInfo!.GetSystemInfo();
+        if (!info.IsWindows)
+        {
+            SetStatus("Scanning needs Windows.", StatusSeverity.Error);
+            return;
+        }
+        if (!_dialogs.Confirm("Scan this build",
+                $"ViVeTool Studio will look through the Windows folders for 64-bit binaries that use feature staging and download their public debug symbols " +
+                $"from msdl.microsoft.com (HTTPS). The first scan of build {info.BuildDisplay} typically downloads a few GB and can take 10 to 30 minutes. " +
+                "You can cancel at any time; finished files are cached.\n\nNo feature settings are changed. Continue?", highRisk: false))
+        {
+            SetStatus("Scan cancelled.", StatusSeverity.Info);
+            return;
+        }
+        _scanCancellation = new CancellationTokenSource();
+        IsImporting = true;
+        CancelScanCommand.NotifyCanExecuteChanged();
+        try
+        {
+            var progress = new Progress<SymbolScanProgress>(p => ScanProgressText =
+                $"{p.Phase}: {p.Completed:N0} of {p.Total:N0}" + (p.BytesDownloaded > 0 ? $", {p.BytesDownloaded / (1024.0 * 1024.0):N0} MB downloaded" : string.Empty) +
+                (p.Current is null ? string.Empty : $" ({p.Current})"));
+            SymbolScanOutcome outcome;
+            try { outcome = await _scanner!.ScanAsync(info.BuildDisplay, info.Build, SymbolScanService.DefaultRoots(), progress, _scanCancellation.Token); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException)
+            {
+                SetStatus("Scan failed: " + ex.Message, StatusSeverity.Error);
+                return;
+            }
+            ScanProgressText = outcome.Problems.Count == 0 ? null : string.Join(Environment.NewLine, outcome.Problems.Take(10));
+            if (outcome.NewNamesSincePreviousScan.Count > 0)
+                ScanProgressText = "New names: " + string.Join(", ", outcome.NewNamesSincePreviousScan.Take(100)) +
+                                   (ScanProgressText is null ? string.Empty : Environment.NewLine + ScanProgressText);
+            if (outcome.Success) ReloadCatalog();
+            SetStatus(outcome.Message, outcome.Cancelled ? StatusSeverity.Info : !outcome.Success ? StatusSeverity.Error :
+                outcome.Problems.Count > 0 ? StatusSeverity.Warning : StatusSeverity.Success);
+        }
+        finally
+        {
+            _scanCancellation?.Dispose();
+            _scanCancellation = null;
+            IsImporting = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanCancelScan))]
+    private void CancelScan() => _scanCancellation?.Cancel();
+
+    [RelayCommand(CanExecute = nameof(CanScan))]
+    private void RemoveScans()
+    {
+        if (!_scanner!.RemoveScans())
+        {
+            SetStatus("There are no scan results to remove.", StatusSeverity.Info);
+            return;
+        }
+        ReloadCatalog();
+        SetStatus("Scan results and cached symbol data removed.", StatusSeverity.Info);
+    }
+
+    private bool CanCrossCheck() => !IsImporting && _manager != null;
+
+    [RelayCommand(CanExecute = nameof(CanCrossCheck))]
+    private async Task CrossCheckAsync()
+    {
+        var ids = await _manager!.GetConfiguredFeatureIdsAsync();
+        if (ids == null)
+        {
+            CrossCheckText = _manager.IsPlatformSupported ? "The runtime feature store could not be read." : "Feature management is not supported on this system.";
+            CrossCheckUnnamedText = null;
+            return;
+        }
+        var result = CatalogCrossCheckResult.Run(ids, _catalog, _manager.OsBuild);
+        CrossCheckText = result.Summary;
+        CrossCheckUnnamedText = result.UnnamedCount == 0 ? null :
+            $"IDs without a name (first {result.UnnamedSample.Count}): " + string.Join(", ", result.UnnamedSample);
+    }
+
+    private async Task RunImportAsync(Func<IProgress<Mach2ImportProgress>, Task<Mach2ImportOutcome>> import)
+    {
+        IsImporting = true;
+        try
+        {
+            var progress = new Progress<Mach2ImportProgress>(p => Mach2ProgressText = $"Reading {p.Completed} of {p.Total}: {p.CurrentPath}");
+            Mach2ImportOutcome outcome;
+            try { outcome = await import(progress); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or HttpRequestException or InvalidDataException)
+            {
+                SetStatus("Import failed: " + ex.Message, StatusSeverity.Error);
+                return;
+            }
+            Mach2ProgressText = outcome.Problems.Count == 0 ? null : string.Join(Environment.NewLine, outcome.Problems.Take(10));
+            if (outcome.Success) ReloadCatalog();
+            SetStatus(outcome.Message, !outcome.Success ? StatusSeverity.Error : outcome.Problems.Count > 0 ? StatusSeverity.Warning : StatusSeverity.Success);
+        }
+        finally { IsImporting = false; }
+    }
+
+    private void ReloadCatalog()
+    {
+        if (_catalog is ReloadableFeatureCatalog reloadable) reloadable.Reload();
+        RefreshCatalogInfo();
+    }
+
+    private void RefreshCatalogInfo()
+    {
+        var all = _catalog.Search(string.Empty, int.MaxValue);
+        var verified = all.Count(e => e.VerificationStatus == VerificationStatus.Verified);
+        var reported = all.Count(e => e.VerificationStatus == VerificationStatus.CommunityReported);
+        CatalogSummary = $"{_catalog.Count:N0} feature IDs known, {all.Count(e => e.Name != null):N0} with a name. " +
+                         $"Names come from the upstream ViVe dictionary (name only) and, if used, from the mach2 import and scans of this PC's build. " +
+                         $"Entries with verified build data: {verified:N0}. Community-reported entries: {reported:N0}. " +
+                         "No entry has a description or category unless a cited source provides one.";
+        CatalogMessages.Clear();
+        foreach (var message in _catalog.LoadMessages.Take(20)) CatalogMessages.Add(message);
+        if (_scanner != null)
+        {
+            var scans = _scanner.LoadScans();
+            ScanStatusText = scans.Count == 0 ? "Not scanned yet." :
+                "Scanned builds: " + string.Join("; ", scans.Select(s =>
+                    $"{s.BuildText} ({s.Binaries.SelectMany(b => b.Features).Select(f => f.Id).Distinct().Count():N0} named IDs, {s.ScannedAtUtc.ToLocalTime():g})")) + ".";
+        }
+        if (_mach2 == null) { Mach2StatusText = string.Empty; return; }
+        var status = _mach2.GetStatus();
+        Mach2StatusText = status.IsImported
+            ? $"Imported: {status.FeatureCount:N0} feature IDs (file updated {status.FileTimeUtc?.ToLocalTime():g}). {status.Description}"
+            : "Not imported yet.";
     }
 
     [RelayCommand]
